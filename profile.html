@@ -1,0 +1,1004 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profil Siswa - QUARTRIX</title>
+    <link rel="icon" href="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png" />
+    <!-- CSP: Allow eval and inline scripts for Firebase and app functionality -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.gstatic.com https://*.googleapis.com https://firebase.googleapis.com https://cdn.jsdelivr.net https://quartrix-eb95f.firebaseapp.com https://quartrix-eb95f.web.app https://*.firebaseio.com https://*.firebasedatabase.app; connect-src 'self' https://*.firebaseio.com https://*.firebasedatabase.app https://*.googleapis.com https://www.gstatic.com wss://*.firebaseio.com wss://*.firebasedatabase.app; worker-src 'self' blob:; img-src 'self' data: https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* =========================
+       RESET & GLOBAL
+    ========================= */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #5a3e2b, #3e2c23);
+        color: #fff5e6;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* Floating Background Decorations */
+      .bg-decoration {
+        position: fixed;
+        border-radius: 50%;
+        opacity: 0.15;
+        z-index: -1;
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .bg-decoration:nth-child(1) {
+        width: 200px;
+        height: 200px;
+        background: #ff8c42;
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+
+      .bg-decoration:nth-child(2) {
+        width: 150px;
+        height: 150px;
+        background: #ff6b1a;
+        top: 60%;
+        right: 15%;
+        animation-delay: 1s;
+      }
+
+      .bg-decoration:nth-child(3) {
+        width: 100px;
+        height: 100px;
+        background: #ffd2a6;
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 2s;
+      }
+
+      .bg-decoration:nth-child(4) {
+        width: 80px;
+        height: 80px;
+        background: #ff8c42;
+        top: 30%;
+        right: 25%;
+        animation-delay: 3s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(10deg);
+        }
+      }
+
+      /* =========================
+       HEADER
+    ========================= */
+      header {
+        background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+        padding: 1.2rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+
+      .logo img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        user-select: none;
+      }
+
+      .logo h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #fff5e6;
+      }
+
+      .logo a {
+        text-decoration: none;
+        color: #fff5e6;
+      }
+
+      .back-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: rgba(255, 245, 230, 0.2);
+        color: #fff5e6;
+        border: none;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .back-btn:hover {
+        background: rgba(255, 245, 230, 0.35);
+        transform: translateX(-3px);
+      }
+
+      .back-btn::before {
+        content: "←";
+        font-size: 1.1rem;
+      }
+
+      /* =========================
+       MAIN CONTENT
+    ========================= */
+      main {
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+        animation: fadeUp 0.6s ease;
+      }
+
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* =========================
+       PROFILE CARD
+    ========================= */
+      .profile-card {
+        background: linear-gradient(145deg, #fff5e6, #f5ebe0);
+        border-radius: 24px;
+        padding: 2.5rem;
+        text-align: center;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .profile-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #ff8c42, #ff6b1a, #ff8c42);
+      }
+
+      /* Profile Photo Section */
+      .profile-photo-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 1.5rem;
+      }
+
+      .profile-photo {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid #ff8c42;
+        box-shadow: 0 8px 25px rgba(255, 140, 66, 0.5);
+        transition: transform 0.3s ease;
+      }
+
+      .profile-photo:hover {
+        transform: scale(1.05);
+      }
+
+      .profile-photo-frame {
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        border-radius: 50%;
+        border: 3px dashed rgba(255, 140, 66, 0.5);
+        animation: rotate 20s linear infinite;
+      }
+
+      @keyframes rotate {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .profile-badge {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: #ff8c42;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: 700;
+        border: 3px solid #fff5e6;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Profile Info */
+      .profile-name {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #3e2c23;
+        margin-bottom: 0.5rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .profile-absen {
+        display: inline-block;
+        background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+        color: #fff;
+        padding: 8px 24px;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+      }
+
+      .profile-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #27ae60;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+      }
+
+      .profile-status::before {
+        content: "●";
+        font-size: 0.8rem;
+        animation: pulse 1.5s ease infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* =========================
+       STATS SECTION
+    ========================= */
+      .stats-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 2rem 0;
+      }
+
+      .stat-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        border-color: #ff8c42;
+      }
+
+      .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #ff8c42;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 0.85rem;
+        color: #666;
+        font-weight: 600;
+        margin-top: 0.3rem;
+      }
+
+      /* =========================
+       TASKS SECTION
+    ========================= */
+      .tasks-section {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .tasks-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 1.2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #eee;
+      }
+
+      .tasks-header h3 {
+        color: #3e2c23;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .tasks-header .icon {
+        font-size: 1.4rem;
+      }
+
+      .task-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f9f9f9, #fff);
+        border-radius: 12px;
+        margin-bottom: 0.8rem;
+        border: 1px solid #eee;
+        transition: all 0.3s ease;
+      }
+
+      .task-item:hover {
+        border-color: #ff8c42;
+        box-shadow: 0 4px 15px rgba(255, 140, 66, 0.2);
+      }
+
+      .task-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .task-check {
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #27ae60, #2ecc71);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 3px 10px rgba(39, 174, 96, 0.4);
+      }
+
+      .task-check::after {
+        content: "✓";
+        color: white;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      .task-info {
+        flex: 1;
+        text-align: left;
+      }
+
+      .task-mapel {
+        font-weight: 700;
+        color: #ff8c42;
+        font-size: 1rem;
+      }
+
+      .task-desc {
+        color: #555;
+        font-size: 0.9rem;
+        margin-top: 2px;
+      }
+
+      .task-deadline {
+        color: #999;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .no-tasks {
+        text-align: center;
+        padding: 2rem;
+        color: #999;
+        font-style: italic;
+      }
+
+      .no-tasks .icon {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+
+      /* =========================
+       LOADING & ERROR STATES
+    ========================= */
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        color: #fff5e6;
+      }
+
+      .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid rgba(255, 245, 230, 0.3);
+        border-top-color: #ff8c42;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        text-align: center;
+        color: #fff5e6;
+      }
+
+      .error-container .icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+
+      .error-container h2 {
+        color: #ff6b6b;
+        margin-bottom: 0.5rem;
+      }
+
+      .error-container button {
+        margin-top: 1.5rem;
+        width: auto;
+        padding: 12px 30px;
+      }
+
+      /* =========================
+       FOOTER
+    ========================= */
+      footer {
+        text-align: center;
+        padding: 1.5rem;
+        background: #3e2c23;
+        margin-top: 2rem;
+      }
+
+      /* Edit Profile Button */
+      .edit-profile-btn {
+        background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+        color: #fff;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 1rem;
+        box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+        transition: all 0.3s ease;
+      }
+
+      .edit-profile-btn:hover {
+        background: linear-gradient(135deg, #ff6b1a, #e55a2b);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 140, 66, 0.6);
+      }
+
+      .edit-profile-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 10px rgba(255, 140, 66, 0.4);
+      }
+
+      /* Modal Edit Profil */
+      #modalEditProfil {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-edit-content {
+        background: linear-gradient(145deg, #fff5e6, #f5ebe0);
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 450px;
+        width: 90%;
+        text-align: center;
+        color: #3e2c23;
+        border: 3px solid #ff8c42;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-edit-content h2 {
+        color: #ff8c42;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+      }
+
+      .modal-edit-content input {
+        margin: 0.5rem 0;
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 2px solid #ff8c42;
+        background: #fff;
+        color: #3e2c23;
+        font-weight: 600;
+        box-sizing: border-box;
+      }
+
+      .modal-edit-content input::placeholder {
+        color: #999;
+      }
+
+      .modal-edit-content label {
+        display: block;
+        text-align: left;
+        margin-top: 1rem;
+        font-weight: 600;
+        color: #ff8c42;
+        font-size: 0.9rem;
+      }
+
+      .modal-edit-content .keterangan {
+        font-size: 0.75rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+        text-align: left;
+      }
+
+      .close-modal-edit {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .close-modal-edit:hover {
+        background: #c0392b;
+      }
+
+      /* =========================
+       RESPONSIVE
+    ========================= */
+      @media (max-width: 600px) {
+        header {
+          padding: 1rem;
+        }
+
+        .logo h1 {
+          font-size: 1.2rem;
+        }
+
+        .back-btn {
+          padding: 8px 16px;
+          font-size: 0.9rem;
+        }
+
+        main {
+          margin: 1rem auto;
+          padding: 0 1rem;
+        }
+
+        .profile-card {
+          padding: 1.5rem;
+        }
+
+        .profile-photo {
+          width: 120px;
+          height: 120px;
+        }
+
+        .profile-name {
+          font-size: 1.4rem;
+        }
+
+        .stats-container {
+          grid-template-columns: 1fr 1fr;
+          gap: 0.8rem;
+        }
+
+        .stat-card {
+          padding: 1rem;
+        }
+
+        .stat-number {
+          font-size: 1.8rem;
+        }
+
+        .task-item {
+          flex-direction: column;
+          text-align: center;
+          gap: 0.5rem;
+        }
+
+        .task-info {
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Background Decorations -->
+    <div class="bg-decoration"></div>
+    <div class="bg-decoration"></div>
+    <div class="bg-decoration"></div>
+    <div class="bg-decoration"></div>
+
+    <header>
+      <div class="logo">
+        <img
+          src="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png"
+          alt="Logo QUARTRIX"
+        />
+        <h1><a href="index.html">QUARTRIX</a></h1>
+      </div>
+      <button class="back-btn" onclick="goToDashboard()">Kembali</button>
+    </header>
+
+    <main id="mainContent">
+      <!-- Loading State -->
+      <div id="loadingState" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Memuat profil siswa...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="error-container" style="display: none">
+        <div class="icon">😕</div>
+        <h2>Data Tidak Ditemukan</h2>
+        <p>Profil siswa tidak dapat ditemukan.</p>
+        <button onclick="goToDashboard()">Kembali ke Dashboard</button>
+      </div>
+
+      <!-- Profile Content -->
+      <div id="profileContent" style="display: none">
+        <div class="profile-card">
+          <div class="profile-photo-container">
+            <div class="profile-photo-frame"></div>
+            <img
+              id="profilePhoto"
+              src=""
+              alt="Foto Profil"
+              class="profile-photo"
+              onerror="
+                this.src =
+                  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNzUiIGN5PSI3NSIgcj0iNzUiIGZpbGw9IiNmZmY1ZTYiLz48cGF0aCBkPSJNNzUgNzVDODAgNzUgODUgNzAgODUgNjVDNjg1IDU5IDgwIDU1IDc1IDU1QzY5IDU1IDY1IDU5IDY1IDY1QzY1IDcwIDY5IDc1IDc1IDc1WiIgZmlsbD0iIzNlMmMyMyIvPjxwYXRoIGQ9Ik04NSA2NUM4NSA3MCA4OCA3NSA5MSA3NUM5NCA3NSA5NSA3MCA5NSA2NUw5NSA1OEM5NCA1MyA5MSA0OCA4OCA0OEM4NSA0OCA4MiA1MyA4MiA1OEw4MiA2NUM4NSA2NVoiIGZpbGw9IiMzZTJjMjMiLz48L3N2Zz4='
+              "
+            />
+            <div id="profileBadge" class="profile-badge"></div>
+          </div>
+
+          <h2 id="profileName" class="profile-name"></h2>
+          <div id="profileAbsen" class="profile-absen"></div>
+
+          <div class="profile-status">
+            <span>Siswa QUARTRIX</span>
+          </div>
+
+        <!-- Edit Profil Button -->
+        <button id="editProfilBtn" class="edit-profile-btn">
+          ✏️ Edit Profil
+        </button>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-icon">📚</div>
+            <div id="totalTugas" class="stat-number">0</div>
+            <div class="stat-label">Total Tugas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div id="tugasSelesai" class="stat-number">0</div>
+            <div class="stat-label">Tugas Selesai</div>
+          </div>
+        </div>
+
+        <!-- Tasks Section -->
+        <div class="tasks-section">
+          <div class="tasks-header">
+            <span class="icon">📋</span>
+            <h3>Tugas yang Telah Selesai</h3>
+          </div>
+          <div id="tasksList">
+            <!-- Tasks will be populated by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal Edit Profil -->
+    <div id="modalEditProfil">
+      <div class="modal-edit-content">
+        <button class="close-modal-edit" onclick="closeEditModal()">×</button>
+        <h2>✏️ Edit Profil</h2>
+        
+        <label for="editNama">Nama Lengkap</label>
+        <div class="keterangan">
+          Masukkan nama lengkap Anda yang akan ditampilkan di profil.
+        </div>
+        <input id="editNama" placeholder="Nama Lengkap" />
+
+        <label for="editAbsen">Nomor Absen</label>
+        <div class="keterangan">
+          Masukkan nomor absen yang akan ditampilkan di profil.
+        </div>
+        <input id="editAbsen" type="number" placeholder="Nomor Absen" />
+
+        <label for="editAbsenLogin">Absen Login</label>
+        <div class="keterangan">
+          Masukkan nomor absen untuk login. Gunakan absen ini saat login berikutnya.
+        </div>
+        <input id="editAbsenLogin" type="number" placeholder="Absen Login" />
+
+        <label for="editFoto">Foto Profil</label>
+        <div class="keterangan">
+          Upload foto baru (format gambar seperti JPG, PNG). Jika tidak diubah, foto lama tetap digunakan.
+        </div>
+        <input id="editFoto" type="file" accept="image/*" />
+        
+        <button id="hapusFotoBtn" type="button" style="
+          background: #e74c3c;
+          color: #fff;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          margin-top: 0.5rem;
+        ">🗑️ Hapus Foto</button>
+
+        <button id="btnSimpanProfil" class="edit-profile-btn" style="width: 100%; margin-top: 1rem;">
+          💾 Simpan
+        </button>
+      </div>
+    </div>
+
+    <footer>&copy; 2025 QUARTRIX. Semua hak cipta dilindungi.</footer>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import {
+        getDatabase,
+        ref,
+        get,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+      import {
+        getAuth,
+        signInAnonymously,
+      } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+      // Firebase Config
+      const firebaseConfig = {
+        apiKey: "AIzaSyCP-Gha19gZ6ZkYCzZ9vh9QL2tKYmNVoCk",
+        authDomain: "quartrix-eb95f.firebaseapp.com",
+        databaseURL:
+          "https://quartrix-eb95f-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "quartrix-eb95f",
+        storageBucket: "quartrix-eb95f.firebasestorage.app",
+        messagingSenderId: "589369640106",
+        appId: "1:589369640106:web:7239da0bd98bae284fbcd3",
+        measurementId: "G-HG1GL8D03G",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      const auth = getAuth(app);
+
+      // Default avatar
+      const defaultAvatar =
+        "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDE1MCAxNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNzUiIGN5PSI3NSIgcj0iNzUiIGZpbGw9IiNmZmY1ZTYiLz48cGF0aCBkPSJNNzUgNzVDODAgNzUgODUgNzAgODUgNjVDNjg1IDU5IDgwIDU1IDc1IDU1QzY5IDU1IDY1IDU5IDY1IDY1QzY1IDcwIDY5IDc1IDc1IDc1WiIgZmlsbD0iIzNlMmMyMyIvPjxwYXRoIGQ9Ik04NSA2NUM4NSA3MCA4OCA3NSA5MSA3NUM5NCA3NSA5NSA3MCA5NSA2NUw5NSA1OEM5NCA1MyA5MSA0OCA4OCA0OEM4NSA0OCA4MiA1MyA4MiA1OEw4MiA2NUM4NSA2NVoiIGZpbGw9IiMzZTJjMjMiLz48L3N2Zz4=";
+
+      // Get absen from URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const absenSiswa = urlParams.get("absen");
+
+      // Function to go back to dashboard
+      window.goToDashboard = () => {
+        window.location.href = "dashboard.html";
+      };
+
+      // Authenticate anonymously before loading data
+      signInAnonymously(auth)
+        .then(() => {
+          console.log("Anonymous login berhasil");
+          loadProfile(); // Load profile after auth success
+        })
+        .catch((error) => {
+          console.error("Error anonymous login:", error);
+          showError();
+        });
+
+      // Load student profile data
+      async function loadProfile() {
+        if (!absenSiswa) {
+          showError();
+          return;
+        }
+
+        try {
+          // Load student data
+          const siswaSnapshot = await get(ref(db, "siswa/" + absenSiswa));
+
+          if (!siswaSnapshot.exists()) {
+            showError();
+            return;
+          }
+
+          const siswaData = siswaSnapshot.val();
+
+          // Update UI
+          document.getElementById("profilePhoto").src =
+            siswaData.fotoURL || defaultAvatar;
+          document.getElementById("profileName").textContent =
+            siswaData.nama || "Nama tidak tersedia";
+          document.getElementById("profileAbsen").textContent =
+            "Absen: " + (siswaData.absen || "-");
+          document.getElementById("profileBadge").textContent =
+            siswaData.absen || "?";
+
+          // Load tasks data
+          await loadTasks(absenSiswa);
+
+          // Show profile content
+          document.getElementById("loadingState").style.display = "none";
+          document.getElementById("profileContent").style.display = "block";
+        } catch (error) {
+          console.error("Error loading profile:", error);
+          showError();
+        }
+      }
+
+      // Load tasks data
+      async function loadTasks(absen) {
+        try {
+          // Get all tasks
+          const tugasSnapshot = await get(ref(db, "tugas"));
+          const semuaTugas = tugasSnapshot.exists() ? tugasSnapshot.val() : {};
+
+          // Get completed tasks for this student
+          const tugasSelesaiRef = ref(db, "tugasSelesai/" + absen);
+          const tugasSelesaiSnapshot = await get(tugasSelesaiRef);
+          const tugasSelesai = tugasSelesaiSnapshot.exists()
+            ? tugasSelesaiSnapshot.val()
+            : {};
+
+          // Count total active tasks (exclude deleted tasks with tersedia: false)
+          const totalTugas = Object.values(semuaTugas).filter(
+            (t) => t.tersedia !== false,
+          ).length;
+          const tugasSelesaiCount = Object.values(tugasSelesai).filter(
+            (val) => val === true,
+          ).length;
+
+          // Update stats
+          document.getElementById("totalTugas").textContent = totalTugas;
+          document.getElementById("tugasSelesai").textContent =
+            tugasSelesaiCount;
+
+          // Render completed tasks
+          const tasksList = document.getElementById("tasksList");
+
+          let adaTugasSelesai = false;
+          let tasksHTML = "";
+
+          for (const tugasKey in tugasSelesai) {
+            if (tugasSelesai[tugasKey] && semuaTugas[tugasKey]) {
+              adaTugasSelesai = true;
+              const tugas = semuaTugas[tugasKey];
+              tasksHTML += `
+              <div class="task-item">
+                <div class="task-check"></div>
+                <div class="task-info">
+                  <div class="task-mapel">${tugas.mapel}</div>
+                  <div class="task-desc">${tugas.deskripsi}</div>
+                </div>
+              </div>
+            `;
+            }
+          }
+
+          if (adaTugasSelesai) {
+            tasksList.innerHTML = tasksHTML;
+          } else {
+            tasksList.innerHTML = `
+            <div class="no-tasks">
+              <span class="icon">📭</span>
+              <p>Belum ada tugas yang diselesaikan.</p>
+            </div>
+          `;
+          }
+        } catch (error) {
+          console.error("Error loading tasks:", error);
+          document.getElementById("totalTugas").textContent = "0";
+          document.getElementById("tugasSelesai").textContent = "0";
+        }
+      }
+
+      // Show error state
+      function showError() {
+        document.getElementById("loadingState").style.display = "none";
+        document.getElementById("errorState").style.display = "flex";
+      }
+    </script>
+
+    <!-- Profile JS -->
+    <script type="module" src="profile.js"></script>
+  </body>
+</html>

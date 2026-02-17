@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Daftar Siswa - QUARTRIX</title>
+  <link rel="icon" href="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png" type="image/jpeg" />
+  <style>
+    /* Reset dan font */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #5a3e2b;
+      color: #fff5e6;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      scroll-behavior: smooth;position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Floating Background Decorations */
+    .bg-decoration {
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.15;
+      z-index: 0;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .bg-decoration:nth-child(1) {
+      width: 200px;
+      height: 200px;
+      background: #ff8c42;
+      top: 10%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .bg-decoration:nth-child(2) {
+      width: 150px;
+      height: 150px;
+      background: #ff6b1a;
+      top: 60%;
+      right: 15%;
+      animation-delay: 1s;
+    }
+
+    .bg-decoration:nth-child(3) {
+      width: 100px;
+      height: 100px;
+      background: #ffd2a6;
+      bottom: 20%;
+      left: 20%;
+      animation-delay: 2s;
+    }
+
+    .bg-decoration:nth-child(4) {
+      width: 80px;
+      height: 80px;
+      background: #ff8c42;
+      top: 30%;
+      right: 25%;
+      animation-delay: 3s;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-20px) rotate(10deg);
+      }
+    }
+
+    a {
+      color: #fff5e6;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    a:hover {
+      color: #3e2c23;
+    }
+
+    header {
+      background: #ff8c42;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 1rem;
+    }
+
+    .logo img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      user-select: none;
+    }
+
+    header h1 {
+      font-weight: 700;
+      font-size: 1.8rem;
+      letter-spacing: 2px;
+      color: #fff5e6;
+      flex-grow: 1;
+    }
+
+    /* LOGIN BUTTON */
+    .login-btn {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      color: #fff5e6;
+      font-weight: 600;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(255, 140, 66, 0.5);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .login-btn:hover {
+      background: #fff5e6;
+      color: #3e2c23;
+      transform: scale(1.05);
+    }
+
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      flex-direction: column;
+      padding: 2rem 2rem 1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      transform: translateY(-100%);
+      opacity: 0;
+      visibility: hidden;
+      transition: transform 0.4s ease, opacity 0.4s ease, visibility 0.4s ease;
+      gap: 1.5rem;
+      z-index: 101;
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid #fff5e6;
+    }
+
+    nav.active {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    nav a {
+      font-weight: 600;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      background: rgba(255, 245, 230, 0.1);
+      border: 1px solid rgba(255, 245, 230, 0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transform: translateY(-20px);
+      opacity: 0;
+      animation: slideIn 0.5s ease forwards;
+    }
+
+    nav a:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    nav a:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    nav a:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    nav a:nth-child(4) {
+      animation-delay: 0.4s;
+    }
+
+    nav a:hover {
+      background: rgba(255, 245, 230, 0.3);
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(255, 140, 66, 0.5);
+    }
+
+    nav a::before {
+      content: '';
+      width: 20px;
+      height: 20px;
+      background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0VjE2QzE0IDE3LjEgMTMuMSAxOCA5IDE4VjE2QzYuOSAxNiA2IDE1LjEgNiAxNFY0QzYgMi45IDYuOSAyIDggMkgxMFoiIGZpbGw9IiNmZmY1ZTYiLz4KPC9zdmc+') no-repeat center;
+      background-size: contain;
+      flex-shrink: 0;
+    }
+
+    nav a:nth-child(1)::before {
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0VjE2QzE0IDE3LjEgMTMuMSAxOCA5IDE4VjE2QzYuOSAxNiA2IDE1LjEgNiAxNFY0QzYgMi45IDYuOSAyIDggMkgxMFoiIGZpbGw9IiNmZmY1ZTYiLz4KPC9zdmc+');
+    }
+
+    nav a:nth-child(2)::before {
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0VjE2QzE0IDE3LjEgMTMuMSAxOCA5IDE4VjE2QzYuOSAxNiA2IDE1LjEgNiAxNFY0QzYgMi45IDYuOSAyIDggMkgxMFoiIGZpbGw9IiNmZmY1ZTYiLz4KPC9zdmc+');
+    }
+
+    nav a:nth-child(3)::before {
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0VjE2QzE0IDE3LjEgMTMuMSAxOCA5IDE4VjE2QzYuOSAxNiA2IDE1LjEgNiAxNFY0QzYgMi45IDYuOSAyIDggMkgxMFoiIGZpbGw9IiNmZmY1ZTYiLz4KPC9zdmc+');
+    }
+
+    nav a:nth-child(4)::before {
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0VjE2QzE0IDE3LjEgMTMuMSAxOCA5IDE4VjE2QzYuOSAxNiA2IDE1LjEgNiAxNFY0QzYgMi45IDYuOSAyIDggMkgxMFoiIGZpbGw9IiNmZmY1ZTYiLz4KPC9zdmc+');
+    }
+
+    @keyframes slideIn {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .hamburger {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      gap: 6px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 245, 230, 0.1);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .hamburger:hover {
+      background: rgba(255, 245, 230, 0.2);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    /* LOGIN BUTTON */
+    .login-btn {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      color: #fff5e6;
+      font-weight: 600;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(255, 140, 66, 0.5);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .login-btn:hover {
+      background: #fff5e6;
+      color: #3e2c23;
+      transform: scale(1.05);
+    }
+
+    .hamburger span {
+      width: 30px;
+      height: 4px;
+      background: #fff5e6;
+      border-radius: 2px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .hamburger span::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: inherit;
+      border-radius: inherit;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .hamburger:hover span::before {
+      transform: scaleX(1);
+    }
+
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(-45deg) translate(-7px, 7px);
+    }
+
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(45deg) translate(-7px, -7px);
+    }
+
+    main {
+      flex: 1;
+      padding: 3rem 2rem;
+      width: 100%;
+    }
+
+    section#siswa {
+      margin-top: 4rem;
+      width: 100%;
+    }
+
+    section#siswa h2 {
+      color: #ffd2a6;
+      margin-bottom: 2rem;
+      text-align: center;
+      animation: fadeInDown 1s ease forwards;
+    }
+
+    /* GRID */
+    .siswa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+      animation: fadeInUp 1s ease forwards;
+    }
+
+    /* SOCIAL MEDIA DI MENU */
+    .social-menu {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      border-top: 1px solid rgba(255, 245, 230, 0.4);
+    }
+
+    .social-menu a {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 245, 230, 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.3s ease;
+    }
+
+    .social-menu a:hover {
+      background: #fff5e6;
+      transform: scale(1.15);
+    }
+
+    .social-menu img {
+      width: 22px;
+      height: 22px;
+      filter: invert(95%);
+      /* putih */
+    }
+
+    .social-menu a:hover img {
+      filter: invert(30%) sepia(80%) saturate(500%) hue-rotate(10deg);
+    }
+
+    /* HILANGKAN SIMBOL DI SAMPING LOGO SOSIAL MEDIA */
+    .social-menu a::before {
+      display: none !important;
+      content: none !important;
+    }
+
+    /* CARD */
+    .siswa-card {
+      background: #fff5e6;
+      /* krem */
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      transition: 0.3s ease;
+      text-align: center;
+    }
+
+    .siswa-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 25px rgba(255, 140, 66, 0.6);
+    }
+
+    .siswa-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 0.7rem;
+    }
+
+    .siswa-card p {
+      color: #3e2c23;
+      /* coklat gelap */
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* FOOTER */
+    footer {
+      background: #3e2c23;
+      /* coklat gelap */
+      text-align: center;
+      padding: 1.5rem 2rem;
+      color: #fff5e6;
+      font-size: 0.9rem;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      0% {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+
+      nav a {
+        font-size: 1rem;
+      }
+
+      .siswa-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Background Decorations -->
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+  
+  <header>
+    <div class="logo">
+      <img src="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png" alt="Logo QUARTRIX" />
+    </div>
+    <h1><a href="index.html">QUARTRIX</a></h1>
+    <a id="loginBtn" href="login.html" class="login-btn">Login</a>
+    <div class="hamburger" id="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </header>
+
+  <nav id="navMenu">
+    <a href="index.html">Beranda</a>
+    <a href="jadwal.html">Jadwal</a>
+    <a href="foto.html">Foto</a>
+    <a href="siswa.html">Siswa</a>
+    <a href="struktur.html">Struktur</a>
+    <div class="social-menu">
+      <a href="https://www.instagram.com/quartriix/" target="_blank" aria-label="Instagram">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram">
+      </a>
+      <a href="https://www.tiktok.com/@quartrixasix" target="_blank" aria-label="TikTok">
+        <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/tiktok.svg" alt="TikTok">
+      </a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="siswa">
+      <h2>Daftar Siswa</h2>
+      <div class="siswa-grid">
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/bjLZtMBd/IMG-20260209-183246-jpg.jpg" alt="Foto Siswa 1">
+          <p>AGUSTINE DYAH AYU RAHMADANI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/PGNhD6wR/IMG-20260209-183132-jpg.jpg" alt="Foto Siswa 2">
+          <p>AHMAD FAISHAL ZAUMAR</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/LhYBV6HP/IMG-20260209-184302-jpg.jpg" alt="Foto Siswa 3">
+          <p>ALANA GEIZEL FAEDAH ALAM</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/sdkhKmbK/IMG-20260209-183936-jpg.jpg" alt="Foto Siswa 4">
+          <p>ALYA NAFEEZA AZZAHRO</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/8L75h6p1/IMG-20260209-182627-jpg.jpg" alt="Foto Siswa 5">
+          <p>ANNISA PRIMADITA MUSAFA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/wZz83bYk/IMG-20260209-182919-jpg.jpg" alt="Foto Siswa 6">
+          <p>ARYA ISSYA MAHENDRA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/bjFnvGhv/IMG-20260209-184614-jpg.jpg" alt="Foto Siswa 7">
+          <p>BERLIANA FAIRUZ IZDIHAR</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/SDXjc8NN/IMG-20260209-182825-jpg.jpg" alt="Foto Siswa 8">
+          <p>CLEON ADLI DANENDRA OMAN</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/LFBQ5Sz/IMG-20260209-182958-jpg.jpg" alt="Foto Siswa 9">
+          <p>EIVEL FLORAYSA NADINDA ARDYALOVA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/DgLkBL4M/IMG-20260209-182704-jpg.jpg" alt="Foto Siswa 10">
+          <p>EVELYN GABRIEL ECHA CARERA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/4nM2SbX2/IMG-20260209-183342-jpg.jpg" alt="Foto Siswa 11">
+          <p>EZHAR AIRLANGGA RISTANSYAH</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/hFxqbSBP/IMG-20260209-184007-jpg.jpg" alt="Foto Siswa 12">
+          <p>FALIA PUTRI ELLYZA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/F4ccH9sP/IMG-20260209-184227-jpg.jpg" alt="Foto Siswa 13">
+          <p>HANINDIA ASYAWA KAYNAHAYA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/qM81qHzR/IMG-20260209-183628-jpg.jpg" alt="Foto Siswa 14">
+          <p>HANUNG ELYA PINANDITA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/ZRsfMdMM/IMG-20260209-183524-jpg.jpg" alt="Foto Siswa 15">
+          <p>HELMY ARSYAD DARMAWAN</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/LzLRwKG0/IMG-20260216-WA0041-jpg.jpg" alt="Foto Siswa 16">
+          <p>HENDARSO WIRATMOKO</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/35pkJTZK/IMG-20260209-184445-jpg.jpg" alt="Foto Siswa 17">
+          <p>JAGAD CAHYO ADY</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/63XLNPF/IMG-20260209-183658-jpg.jpg" alt="Foto Siswa 18">
+          <p>JESSICA AFA MARTANIA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/F42W07LX/IMG-20260209-183409-jpg.jpg" alt="Foto Siswa 19">
+          <p>KAYLA AMANDA SYAMSAFINA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/f3FVK6L/IMG-20260216-WA0042-jpg.jpg" alt="Foto Siswa 20">
+          <p>KEVIN APRILIO</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/0VpxxXk2/IMG-20260209-183827-jpg.jpg" alt="Foto Siswa 21">
+          <p>LINTANG YULIDHA PUTRI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/rgn23D1/IMG-20260209-183445-jpg.jpg" alt="Foto Siswa 22">
+          <p>MUHAMMAD IBNU KHALDUN ALFAUZI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/99GSrS44/IMG-20260209-184730-jpg.jpg"
+            alt="Foto Siswa 23">
+          <p>NABIL MAHIDARA ARTANTO</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/XkCHvjz6/IMG-20260209-183045-jpg.jpg" alt="Foto Siswa 24">
+          <p>NABILA KIRANA CANTYA PUTRI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/cSjDCXmJ/IMG-20260209-183601-jpg.jpg" alt="Foto Siswa 25">
+          <p>NADIA REYSSA IRVANA PUTRI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/csQgQqH/IMG-20260209-182743-jpg.jpg" alt="Foto Siswa 26">
+          <p>NATHANAEL ABIRA SETYO BUDI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/XZvrVfnM/IMG-20260209-184525-jpg.jpg" alt="Foto Siswa 27">
+          <p>NATHANIA NARESWARI BRAHMA PUTRI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/XkDL1XMX/IMG-20260209-183901-jpg.jpg" alt="Foto Siswa 28">
+          <p>NIDA ULHAQ NUR SYIFA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/7JCnCCCJ/IMG-20260209-184705-jpg.jpg" alt="Foto Siswa 29">
+          <p>NISRINA MARYAM</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/LdMqKLsH/IMG-20260209-184332-jpg.jpg" alt="Foto Siswa 30">
+          <p>PHILLIPUS ADE MAHENDRA PUTRA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/gbBr72tQ/IMG-20260209-183211-jpg.jpg" alt="Foto Siswa 31">
+          <p>PRISYA NOVI ANGGRAENI</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/FLWjwjgm/IMG-20260209-184107-jpg.jpg" alt="Foto Siswa 32">
+          <p>RENITA ISNABILA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/whF44rf9/IMG-20260209-183800-jpg.jpg" alt="Foto Siswa 33">
+          <p>SEDYO SAKA PRATAMA</p>
+        </div>
+        <div class="siswa-card">
+          <img src="https://i.ibb.co.com/hJRxMgT0/IMG-20260209-184644-jpg.jpg" alt="Foto Siswa 34">
+          <p>SELLA RAHMA YUNANDA</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    &copy; 2025 QUARTRIX. Semua hak cipta dilindungi.
+  </footer>
+
+  <script>
+    // Toggle hamburger menu
+    const hamburger = document.getElementById('hamburger');
+    const navMenu = document.getElementById('navMenu');
+
+    hamburger.addEventListener('click', function () {
+      hamburger.classList.toggle('active');
+      navMenu.classList.toggle('active');
+    });
+    const grid = document.querySelector(".siswa-grid");
+    let tambahan = JSON.parse(localStorage.getItem("siswa")) || [];
+
+    tambahan.forEach(s => {
+      const card = document.createElement("div");
+      card.className = "siswa-card";
+      card.innerHTML = `
+    <img src="${s.foto}">
+    <p>${s.nama}</p>
+  `;
+      grid.appendChild(card);
+    });
+    // SMART LOGIN BUTTON
+    const loginBtn = document.getElementById("loginBtn");
+    const role = localStorage.getItem("role");
+
+    if (role) {
+      loginBtn.textContent = "Dashboard";
+      loginBtn.href = "dashboard.html";
+    }
+  </script>
+</body>
+
+</html>

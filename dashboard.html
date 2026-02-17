@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard - QUARTRIX</title>
+    <link rel="icon" href="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png" />
+    <!-- CSP removed to allow Firebase Realtime Database to work -->
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+      
+      body {
+        background: #5a3e2b;
+        color: #fff5e6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* Floating Background Decorations */
+      .bg-decoration {
+        position: fixed;
+        border-radius: 50%;
+        opacity: 0.15;
+        z-index: -1;
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .bg-decoration:nth-child(1) {
+        width: 200px;
+        height: 200px;
+        background: #ff8c42;
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+
+      .bg-decoration:nth-child(2) {
+        width: 150px;
+        height: 150px;
+        background: #ff6b1a;
+        top: 60%;
+        right: 15%;
+        animation-delay: 1s;
+      }
+
+      .bg-decoration:nth-child(3) {
+        width: 100px;
+        height: 100px;
+        background: #ffd2a6;
+        bottom: 20%;
+        left: 20%;
+        animation-delay: 2s;
+      }
+
+      .bg-decoration:nth-child(4) {
+        width: 80px;
+        height: 80px;
+        background: #ff8c42;
+        top: 30%;
+        right: 25%;
+        animation-delay: 3s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(10deg);
+        }
+      }
+
+      header {
+        background: #ff8c42;
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      header a {
+        color: #fff5e6;
+        text-decoration: none;
+        letter-spacing: 2px;
+      }
+
+      /* Dropdown Menu Styles */
+      .menu-container {
+        position: relative;
+      }
+
+      .menu-btn {
+        background: #3e2c23;
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .menu-btn:hover {
+        background: #5a3e2b;
+      }
+
+      .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: #fff5e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        min-width: 180px;
+        z-index: 1000;
+        margin-top: 8px;
+        overflow: hidden;
+      }
+
+      .dropdown-menu.show {
+        display: block;
+      }
+
+      .dropdown-menu a,
+      .dropdown-menu button {
+        display: block;
+        width: 100%;
+        padding: 12px 16px;
+        color: #3e2c23;
+        text-decoration: none;
+        font-weight: 600;
+        border: none;
+        background: none;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .dropdown-menu a:hover,
+      .dropdown-menu button:hover {
+        background: #ff8c42;
+        color: #fff;
+      }
+
+      .dropdown-menu .divider {
+        height: 1px;
+        background: #ddd;
+        margin: 4px 0;
+      }
+
+      .logout {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .logout:hover {
+        background: #c0392b;
+      }
+
+      main {
+        max-width: 1000px;
+        margin: auto;
+        padding: 2rem;
+        flex: 1;
+      }
+
+      .card {
+        background: #fff5e6;
+        color: #3e2c23;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      }
+
+      .card h2 {
+        margin-bottom: 1rem;
+        color: #5a3e2b;
+      }
+
+      ul {
+        list-style: none;
+      }
+
+      li {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* JADWAL MENARIK */
+      #jadwalButtons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+
+      .hari-btn {
+        background: #ff8c42;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .hari-btn.active {
+        background: #3e2c23;
+      }
+
+      #jadwalDetail {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .jadwal-card {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+      }
+
+      .jadwal-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .jadwal-mapel {
+        font-weight: 700;
+        color: #ff8c42;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .jadwal-waktu {
+        color: #666;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .jadwal-waktu::before {
+        content: "⏰";
+        font-size: 1rem;
+      }
+
+      /* ADMIN */
+      #adminPanel input,
+      #tambahTugasPanel input {
+        width: 100%;
+        padding: 10px;
+        margin: 0.4rem 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .hapus-btn {
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+
+      .hapus-btn:hover {
+        background: #c0392b;
+      }
+
+      /* TOMBOL MENARIK */
+      .btn-menarik {
+        background: linear-gradient(45deg, #ff8c42, #ff6b35);
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-menarik::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn-menarik:hover::before {
+        left: 100%;
+      }
+
+      .btn-menarik:hover {
+        background: linear-gradient(45deg, #ff6b35, #e55a2b);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 140, 66, 0.6);
+      }
+
+      .btn-menarik:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 10px rgba(255, 140, 66, 0.4);
+      }
+
+      .logo img {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        user-select: none;
+      }
+
+      /* TUGAS MENARIK */
+      .tugas-card {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .tugas-mapel {
+        font-weight: 700;
+        color: #ff8c42;
+        font-size: 1.1rem;
+      }
+
+      .tugas-desc {
+        color: #333;
+      }
+
+      .tugas-deadline {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .tugas-admin {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .tugas-selesai {
+        text-decoration: line-through;
+        color: #999;
+      }
+
+      .checkbox {
+        margin-right: 10px;
+        width: 20px;
+        height: 20px;
+      }
+
+      /* PROFIL */
+      #info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .profil-foto {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #ff8c42;
+      }
+
+      .edit-profil-btn {
+        background: #3498db;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-left: auto;
+      }
+
+      .edit-profil-btn:hover {
+        background: #2980b9;
+      }
+
+      #modalProfil {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background: #5a3e2b;
+        border-radius: 10px;
+        padding: 2rem;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        color: #fff5e6;
+        border: 2px solid #ff8c42;
+      }
+
+      .modal-content h2 {
+        color: #ff8c42;
+        margin-bottom: 1.5rem;
+      }
+
+      .modal-content input {
+        margin: 0.5rem 0;
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 2px solid #ff8c42;
+        background: #fff5e6;
+        color: #3e2c23;
+        font-weight: 600;
+      }
+
+      .modal-content input::placeholder {
+        color: #999;
+      }
+
+      .modal-content label {
+        display: block;
+        text-align: left;
+        margin-top: 0.5rem;
+        font-weight: 600;
+        color: #ff8c42;
+      }
+
+      .modal-content .keterangan {
+        font-size: 0.8rem;
+        color: #ccc;
+        margin-bottom: 0.5rem;
+        text-align: left;
+      }
+
+      /* File input styling */
+      .file-input-wrapper {
+        position: relative;
+        margin: 0.5rem 0;
+      }
+
+      .file-input-wrapper input[type="file"] {
+        display: none;
+      }
+
+      .file-input-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        border-radius: 8px;
+        border: 2px dashed #ff8c42;
+        background: rgba(255, 140, 66, 0.1);
+        color: #ff8c42;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .file-input-label:hover {
+        background: rgba(255, 140, 66, 0.2);
+        border-style: solid;
+      }
+
+      .file-input-label::before {
+        content: "📁 ";
+        font-size: 1.2rem;
+      }
+
+      .filename-display {
+        display: block;
+        margin-top: 0.5rem;
+        padding: 8px 12px;
+        background: #ff8c42;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-align: left;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .filename-display::before {
+        content: "📎 ";
+      }
+
+      .no-file {
+        color: #ccc;
+        font-style: italic;
+      }
+
+      .modal-content button {
+        margin-top: 1rem;
+      }
+
+      .close-modal {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      /* INFO MENARIK */
+      #infoText {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #ff8c42;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        animation: fadeIn 1s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      footer {
+        text-align: center;
+        padding: 1rem;
+        background: #3e2c23;
+      }
+
+      /* DAFTAR SISWA */
+      #daftarSiswa ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      #daftarSiswa li {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      /* DAFTAR SISWA UNTUK SISWA - Tombol Simple dan Ringkas */
+      .btn-profil-siswa {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #ff8c42;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(255, 140, 66, 0.4);
+        transition: all 0.3s ease;
+      }
+
+      .btn-profil-siswa:hover {
+        background: #e57a35;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 140, 66, 0.5);
+      }
+
+      .btn-profil-siswa:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(255, 140, 66, 0.4);
+      }
+
+      .btn-profil-siswa .icon {
+        font-size: 1rem;
+      }
+
+      /* Container untuk tombol profil siswa - Simple dan Ringkas */
+      .profil-siswa-section {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 100;
+        text-align: center;
+        padding: 1rem;
+        background: #fff5e6;
+        border-radius: 12px;
+        border: 2px solid #ff8c42;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .profil-siswa-section .label {
+        display: block;
+        font-size: 0.8rem;
+        color: #5a3e2b;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+      }
+
+      /* Button Daftar Semua Siswa - Same style as Kembali button in login */
+      .daftar-siswa-btn {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+        color: #fff5e6;
+        font-weight: 600;
+        border-radius: 25px;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+        transition: all 0.3s ease;
+        z-index: 100;
+        border: none;
+        cursor: pointer;
+        animation: slideInLeft 0.6s ease forwards;
+      }
+
+      .daftar-siswa-btn:hover {
+        transform: translateX(-5px);
+        box-shadow: 0 6px 20px rgba(255, 140, 66, 0.6);
+        color: #fff5e6;
+      }
+
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* Responsive - move to bottom on mobile */
+      @media (max-width: 768px) {
+        .profil-siswa-section {
+          position: relative;
+          top: auto;
+          right: auto;
+          margin: 1rem auto;
+          max-width: 90%;
+        }
+        
+        .btn-profil-siswa {
+          padding: 14px 24px;
+          font-size: 1rem;
+        }
+
+        .daftar-siswa-btn {
+          bottom: 15px;
+          left: 15px;
+          padding: 10px 16px;
+          font-size: 0.9rem;
+        }
+      }
+
+      /* MODAL DAFTAR SEMUA SISWA */
+      #modalSemuaSiswa {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        overflow-y: auto;
+      }
+
+      .modal-semua-siswa-content {
+        background: #fff5e6;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        text-align: center;
+        color: #3e2c23;
+        border: 3px solid #ff8c42;
+      }
+
+      .modal-semua-siswa-content h2 {
+        color: #ff8c42;
+        margin-bottom: 1rem;
+      }
+
+      .close-modal-semua-siswa {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .semua-siswa-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+        transition: background 0.3s;
+        border-radius: 8px;
+        margin-bottom: 5px;
+      }
+
+      .semua-siswa-item:hover {
+        background: rgba(255, 140, 66, 0.2);
+      }
+
+      .semua-siswa-item img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #ff8c42;
+      }
+
+      .semua-siswa-item .info {
+        text-align: left;
+        flex: 1;
+      }
+
+      .semua-siswa-item .nama {
+        font-weight: 700;
+        color: #3e2c23;
+      }
+
+      .semua-siswa-item .absen {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .semua-siswa-item .arrow {
+        color: #ff8c42;
+        font-size: 1.2rem;
+      }
+
+      /* MODAL PROFIL SISWA LAIN */
+      #modalProfilSiswa {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 3000;
+        overflow-y: auto;
+      }
+
+      .modal-profil-siswa-content {
+        background: #fff5e6;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        text-align: center;
+        color: #3e2c23;
+        border: 3px solid #ff8c42;
+      }
+
+      .modal-profil-siswa-content h2 {
+        color: #ff8c42;
+        margin-bottom: 1rem;
+      }
+
+      .close-modal-profil-siswa {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .profil-siswa-foto {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #ff8c42;
+        margin-bottom: 1rem;
+      }
+
+      .profil-siswa-nama {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #3e2c23;
+        margin-bottom: 0.5rem;
+      }
+
+      .profil-siswa-absen {
+        font-size: 1.1rem;
+        color: #666;
+        margin-bottom: 1.5rem;
+      }
+
+      .profil-siswa-tugas {
+        text-align: left;
+        margin-top: 1rem;
+      }
+
+      .profil-siswa-tugas h3 {
+        color: #ff8c42;
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      .tugas-selesai-item {
+        background: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0.8rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .tugas-selesai-item::before {
+        content: "✅";
+      }
+
+      .tugas-selesai-item .mapel {
+        font-weight: 700;
+        color: #ff8c42;
+      }
+
+      .tugas-selesai-item .deskripsi {
+        color: #333;
+        font-size: 0.9rem;
+      }
+
+      .tidak-ada-tugas {
+        color: #999;
+        font-style: italic;
+        text-align: center;
+        padding: 1rem;
+      }
+
+      .kembali-btn {
+        background: #3498db;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 1rem;
+      }
+
+      .kembali-btn:hover {
+        background: #2980b9;
+      }
+
+      /* MODAL DAFTAR SISWA */
+      #modalDaftarSiswa {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        overflow-y: auto;
+      }
+
+      .modal-siswa-content {
+        background: #fff5e6;
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        text-align: center;
+        color: #3e2c23;
+        border: 3px solid #ff8c42;
+      }
+
+      .modal-siswa-content h2 {
+        color: #ff8c42;
+        margin-bottom: 1rem;
+      }
+
+      .close-modal-siswa {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: #e74c3c;
+        color: #fff;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .siswa-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+        transition: background 0.3s;
+        border-radius: 8px;
+        margin-bottom: 5px;
+      }
+
+      .siswa-item:hover {
+        background: rgba(255, 140, 66, 0.2);
+      }
+
+      .siswa-item img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #ff8c42;
+      }
+
+      .siswa-item .info {
+        text-align: left;
+        flex: 1;
+      }
+
+      .siswa-item .nama {
+        font-weight: 700;
+        color: #3e2c23;
+      }
+
+      .siswa-item .absen {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .siswa-item .arrow {
+        color: #ff8c42;
+        font-size: 1.2rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Background Decorations -->
+    <div class="bg-decoration"></div>
+    <div class="bg-decoration"></div>
+    <div class="bg-decoration"></div>
+    <div class="bg-decoration"></div>
+
+    <header>
+      <div class="logo">
+        <img
+          src="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png"
+          alt="Logo QUARTRIX"
+        />
+      </div>
+      <h1><a href="index.html">QUARTRIX</a></h1>
+      <div class="menu-container">
+        <button class="logout" id="menuBtn">
+          🚪 Logout
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="card">
+        <div id="info">
+          <img
+            id="profilFoto"
+            src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiNmZmY1ZTYiLz4KPHBhdGggZD0iTTI1IDI1QzI3LjIgMjUgMjkgMjIuMiAyOSAyMEMyOSAxNy44IDI3LjIgMTYgMjUgMTZDMTYuOCAxNiAxNSAxNy44IDE1IDIwQzE1IDIyLjIgMTYuOCAyNSAyNSAyNVoiIGZpbGw9IiMzZTJjMjMiLz4KPHBhdGggZD0iTTMwIDI1QzMwIDI4LjMgMjduMyAzMSAyNSAzMUMyMi43IDMxIDIwIDI4LjMgMjAgMjVDMjAgMjEuNyAyMi43IDE5IDI1IDE5QzI3LjMgMTkgMzAgMjEuNyAzMCAyNVoiIGZpbGw9IiMzZTJjMjMiLz4KPC9zdmc+"
+            alt="Foto Profil"
+            class="profil-foto"
+          />
+          <span id="infoText"></span>
+          <button id="lihatProfilBtn" class="edit-profil-btn" style="margin-left: auto;">👁️ Lihat Profil</button>
+        </div>
+      </div>
+
+
+      <div class="card" id="adminPanel" style="display: none">
+        <h2>Tambah Siswa</h2>
+        <input id="namaBaru" placeholder="Nama Lengkap" />
+        <input id="absenBaru" type="number" placeholder="Nomor Absen" />
+        <button id="btnTambahSiswa" class="btn-menarik">➕ Tambah Siswa</button>
+        <h2>Import Semua Siswa (34)</h2>
+        <button id="btnImportSiswa" class="btn-menarik">📥 Import Siswa</button>
+        <h2>Ubah Absen Siswa</h2>
+        <input id="absenLama" type="number" placeholder="Absen Lama" />
+        <input id="absenBaruAdmin" type="number" placeholder="Absen Baru" />
+        <button id="btnUbahAbsen" class="btn-menarik">🔄 Ubah Absen</button>
+        <h2>Daftar Siswa Sedang Login</h2>
+        <div id="daftarSiswa"></div>
+      </div>
+
+      <div class="card">
+        <h2>Jadwal Pelajaran</h2>
+        <div id="jadwalButtons"></div>
+        <div id="jadwalDetail"></div>
+      </div>
+
+      <div class="card">
+        <h2>Daftar Tugas</h2>
+        <div id="tugasList"></div>
+        <div id="tambahTugasPanel" style="display: none; margin-top: 1rem">
+          <input
+            id="mapelBaru"
+            placeholder="Mata Pelajaran (e.g., Matematika)"
+          />
+          <input id="tugasBaru" placeholder="Deskripsi Tugas" />
+          <input id="deadlineBaru" type="date" />
+          <button id="btnTambahTugas" class="btn-menarik">
+            📝 Tambah Tugas
+          </button>
+        </div>
+      </div>
+    </main>
+
+
+    <!-- Modal Daftar Semua Siswa -->
+    <div id="modalSemuaSiswa">
+      <div class="modal-semua-siswa-content">
+        <button class="close-modal-semua-siswa" onclick="closeModalSemuaSiswa()">×</button>
+        <h2>Daftar Semua Siswa</h2>
+        <div id="semuaSiswaList" style="max-height: 400px; overflow-y: auto;">
+          <!-- Student list will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Profil Siswa Lain -->
+    <div id="modalProfilSiswa">
+      <div class="modal-profil-siswa-content">
+        <button class="close-modal-profil-siswa" onclick="closeModalProfilSiswa()">×</button>
+        <button class="kembali-btn" onclick="closeModalProfilSiswa(); document.getElementById('modalSemuaSiswa').style.display = 'flex';">
+          ← Kembali
+        </button>
+        <img id="profilSiswaFoto" src="" alt="Foto Profil" class="profil-siswa-foto">
+        <div id="profilSiswaNama" class="profil-siswa-nama"></div>
+        <div id="profilSiswaAbsen" class="profil-siswa-absen"></div>
+        <div class="profil-siswa-tugas">
+          <h3>Tugas yang Telah Selesai</h3>
+          <div id="profilSiswaTugasList">
+            <!-- Completed tasks will be populated by JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>&copy; 2025 QUARTRIX. Semua hak cipta dilindungi.</footer>
+
+    <!-- Floating Button: Lihat Daftar Semua Siswa (Bottom Left) -->
+    <button id="btnDaftarSemuaSiswaFloating" class="daftar-siswa-btn">
+      Lihat Daftar Semua Siswa
+    </button>
+
+    <!-- Import dashboard.js for fixed async/await code -->
+    <script type="module" src="dashboard.js"></script>
+  </body>
+</html>

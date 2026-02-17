@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - QUARTRIX</title>
+  <link rel="icon" href="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png">
+    <!-- CSP: Allow eval and inline scripts for Firebase and app functionality -->
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.gstatic.com https://*.googleapis.com https://firebase.googleapis.com https://cdn.jsdelivr.net https://quartrix-eb95f.firebaseapp.com https://quartrix-eb95f.web.app https://*.firebaseio.com https://*.firebasedatabase.app; connect-src 'self' https://*.firebaseio.com https://*.firebasedatabase.app https://*.googleapis.com https://www.gstatic.com wss://*.firebaseio.com wss://*.firebasedatabase.app; worker-src 'self' blob:; img-src 'self' data: https://*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: #5a3e2b;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3e2c23;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Floating Background Decorations */
+    .bg-decoration {
+      position: fixed;
+      border-radius: 50%;
+      opacity: 0.15;
+      z-index: 0;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .bg-decoration:nth-child(1) {
+      width: 200px;
+      height: 200px;
+      background: #ff8c42;
+      top: 10%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .bg-decoration:nth-child(2) {
+      width: 150px;
+      height: 150px;
+      background: #ff6b1a;
+      top: 60%;
+      right: 15%;
+      animation-delay: 1s;
+    }
+
+    .bg-decoration:nth-child(3) {
+      width: 100px;
+      height: 100px;
+      background: #ffd2a6;
+      bottom: 20%;
+      left: 20%;
+      animation-delay: 2s;
+    }
+
+    .bg-decoration:nth-child(4) {
+      width: 80px;
+      height: 80px;
+      background: #ff8c42;
+      top: 30%;
+      right: 25%;
+      animation-delay: 3s;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-20px) rotate(10deg);
+      }
+    }
+
+    /* Back Button */
+    .back-btn {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      color: #fff5e6;
+      font-weight: 600;
+      border-radius: 25px;
+      text-decoration: none;
+      box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+      transition: all 0.3s ease;
+      z-index: 100;
+      animation: slideInLeft 0.6s ease forwards;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-5px);
+      box-shadow: 0 6px 20px rgba(255, 140, 66, 0.6);
+      color: #fff5e6;
+    }
+
+    .back-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-box {
+      background: #fff5e6;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, .4);
+      animation: fadeInScale 0.8s ease;
+      border: 2px solid rgba(255, 140, 66, 0.3);
+    }
+
+    /* Logo at top */
+    .login-logo {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .login-logo img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 50%;
+      box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(255, 140, 66, 0.6);
+      }
+    }
+
+    .login-box h1 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      color: #5a3e2b;
+      letter-spacing: 3px;
+      font-size: 1.8rem;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: #8b7355;
+      font-size: 0.9rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 1.2rem;
+      animation: slideInUp 0.6s ease forwards;
+      opacity: 0;
+    }
+
+    .input-group:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .input-group:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .input-group svg {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      fill: #8b7355;
+      transition: fill 0.3s ease;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 14px 14px 45px;
+      margin-bottom: 0;
+      border-radius: 12px;
+      border: 2px solid #ddd;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      background: #fff;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #ff8c42;
+      box-shadow: 0 0 0 4px rgba(255, 140, 66, 0.15);
+    }
+
+    .input-group input:focus + svg,
+    .input-group input:focus ~ svg {
+      fill: #ff8c42;
+    }
+
+    .input-group input::placeholder {
+      color: #aaa;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      color: #fff5e6;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+      margin-top: 0.5rem;
+      animation: slideInUp 0.6s ease forwards;
+      opacity: 0;
+      animation-delay: 0.4s;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255, 140, 66, 0.6);
+      background: linear-gradient(135deg, #ff9f5a, #ff7b2a);
+    }
+
+    .login-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .error {
+      color: #e74c3c;
+      text-align: center;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+      padding: 10px;
+      background: rgba(231, 76, 60, 0.1);
+      border-radius: 8px;
+      display: none;
+      animation: shake 0.5s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .note {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #8b7355;
+      padding: 12px;
+      background: rgba(255, 140, 66, 0.1);
+      border-radius: 10px;
+      line-height: 1.6;
+    }
+
+    .note strong {
+      color: #ff8c42;
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Footer */
+    .login-footer {
+      margin-top: 2rem;
+      text-align: center;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 140, 66, 0.2);
+    }
+
+    .login-footer p {
+      color: #8b7355;
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .social-links a {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #ff8c42, #ff6b1a);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 10px rgba(255, 140, 66, 0.3);
+    }
+
+    .social-links a:hover {
+      transform: scale(1.15);
+      box-shadow: 0 5px 20px rgba(255, 140, 66, 0.5);
+    }
+
+    .social-links img {
+      width: 18px;
+      height: 18px;
+      filter: invert(95%);
+    }
+
+    /* Loading state */
+    .login-btn.loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .login-btn.loading::after {
+      content: '';
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff5e6;
+      border-top-color: transparent;
+      border-radius: 50%;
+      margin-left: 10px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-box {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+      }
+
+      .back-btn {
+        top: 15px;
+        left: 15px;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+
+      .login-logo img {
+        width: 70px;
+        height: 70px;
+      }
+
+      .login-box h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Background Decorations -->
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
+
+  <!-- Back Button -->
+  <a href="index.html" class="back-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    Kembali
+  </a>
+
+  <div class="login-container">
+    <div class="login-box">
+      <!-- Logo -->
+      <div class="login-logo">
+        <img src="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png" alt="Logo QUARTRIX">
+      </div>
+
+      <h1>LOGIN</h1>
+      <p class="login-subtitle">Masuk ke Dashboard QUARTRIX</p>
+
+      <div class="input-group">
+        <input type="text" id="username" placeholder="Nama Lengkap">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>
+        </svg>
+      </div>
+
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Nomor Absen">
+        <svg viewBox="0 0 24 24">
+          <path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zM7 11V7a5 5 0 0 1 10 0v4M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+        </svg>
+      </div>
+
+      <button class="login-btn" id="loginBtn" onclick="login()">Masuk</button>
+
+      <p class="error" id="errorMsg">Username atau password salah</p>
+
+      <p class="note">
+        <strong>Siswa:</strong> Username = Nama Lengkap (caps lock & pakai spasi)<br>
+        Password = Nomor Absen<br>
+        <strong>Admin:</strong> Adalah Pokoknya Ga Usah Kepo
+      </p>
+
+      <!-- Footer with Social Links -->
+      <div class="login-footer">
+        <p>Ikuti kami di media sosial</p>
+        <div class="social-links">
+          <a href="https://www.instagram.com/quartriix/" target="_blank" aria-label="Instagram">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/instagram.svg" alt="Instagram">
+          </a>
+          <a href="https://www.tiktok.com/@quartrixasix" target="_blank" aria-label="TikTok">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/tiktok.svg" alt="TikTok">
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import login.js instead of inline script -->
+  <script type="module" src="login.js"></script>
+
+</body>
+
+</html>
