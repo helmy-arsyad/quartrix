@@ -2,8 +2,32 @@
 // FIXED: iOS Safari authentication issues
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence, browserSessionPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ✅ SAFE STORAGE FUNCTIONS - Safari iOS compatibility
+function safeGet(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch (e) {
+    console.warn("localStorage get blocked:", key);
+    return null;
+  }
+}
+
+function safeSet(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn("localStorage set blocked:", key);
+  }
+}
+
+function safeRemove(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch (e) {}
+}
 
 // Config Firebase
 const firebaseConfig = {
@@ -137,28 +161,28 @@ window.login = async () => {
         createdAt: new Date().toISOString()
       });
       
-      // Simpan ke localStorage
-      localStorage.setItem("isLogin", "true");
-      localStorage.setItem("role", "admin");
-      localStorage.setItem("nama", "ADMIN");
-      localStorage.setItem("absen", "-");
-      localStorage.setItem("uid", uid);
+      // Simpan ke localStorage ✅ PAKAI SAFE VERSION
+      safeSet("isLogin", "true");
+      safeSet("role", "admin");
+      safeSet("nama", "ADMIN");
+      safeSet("absen", "-");
+      safeSet("uid", uid);
       
       // Remember Me - Handle berbeda untuk iOS Safari (FIX #4)
       if (rememberMe) {
-        localStorage.setItem("rememberMe", "true");
-        localStorage.setItem("savedUsername", username);
+        safeSet("rememberMe", "true");
+        safeSet("savedUsername", username);
         // 🔥 FIX: Jangan simpan password di iOS Safari
         if (!isIOSafari()) {
-          localStorage.setItem("savedPassword", password);
+          safeSet("savedPassword", password);
         } else {
-          localStorage.removeItem("savedPassword");
+          safeRemove("savedPassword");
           console.log("iOS Safari: Password not saved for security");
         }
       } else {
-        localStorage.setItem("rememberMe", "false");
-        localStorage.removeItem("savedUsername");
-        localStorage.removeItem("savedPassword");
+        safeSet("rememberMe", "false");
+        safeRemove("savedUsername");
+        safeRemove("savedPassword");
       }
       
       // 🔥 FIX: Redirect setelah auth state siap
@@ -212,27 +236,28 @@ window.login = async () => {
           const userCredential = await signInOnce();
           const uid = userCredential.uid;
           
-          localStorage.setItem("isLogin", "true");
-          localStorage.setItem("role", "siswa");
-          localStorage.setItem("nama", data.nama);
-          localStorage.setItem("absen", password);
-          localStorage.setItem("uid", uid);
+          // Simpan ke localStorage ✅ PAKAI SAFE VERSION
+          safeSet("isLogin", "true");
+          safeSet("role", "siswa");
+          safeSet("nama", data.nama);
+          safeSet("absen", password);
+          safeSet("uid", uid);
           
           // Remember Me - Handle berbeda untuk iOS Safari (FIX #4)
           if (rememberMe) {
-            localStorage.setItem("rememberMe", "true");
-            localStorage.setItem("savedUsername", username);
+            safeSet("rememberMe", "true");
+            safeSet("savedUsername", username);
             // 🔥 FIX: Jangan simpan password di iOS Safari
             if (!isIOSafari()) {
-              localStorage.setItem("savedPassword", password);
+              safeSet("savedPassword", password);
             } else {
-              localStorage.removeItem("savedPassword");
+              safeRemove("savedPassword");
               console.log("iOS Safari: Password not saved for security");
             }
           } else {
-            localStorage.setItem("rememberMe", "false");
-            localStorage.removeItem("savedUsername");
-            localStorage.removeItem("savedPassword");
+            safeSet("rememberMe", "false");
+            safeRemove("savedUsername");
+            safeRemove("savedPassword");
           }
           
           // 🔥 FIX: Redirect setelah auth state siap
@@ -283,21 +308,16 @@ window.login = async () => {
   }
 };
 
+// ✅ HAPUS AUTO REDIRECT - Tidak ada redirect otomatis di load
+// Safari iOS tidak stabil di fase ini
+
 // Allow Enter key to submit and check for Remember Me on page load
 document.addEventListener("DOMContentLoaded", () => {
-  // CHECK: Jika user sudah login (Remember Me), redirect ke dashboard
-  const isLogin = localStorage.getItem("isLogin");
-  if (isLogin === "true") {
-    // User sudah login, redirect ke dashboard
-    window.location.href = "dashboard.html";
-    return;
-  }
-  
-  // LOAD: Isi otomatis jika ada data Remember Me
-  const rememberMe = localStorage.getItem("rememberMe");
+  // LOAD: Isi otomatis jika ada data Remember Me ✅ PAKAI SAFE VERSION
+  const rememberMe = safeGet("rememberMe");
   if (rememberMe === "true") {
-    const savedUsername = localStorage.getItem("savedUsername");
-    const savedPassword = localStorage.getItem("savedPassword");
+    const savedUsername = safeGet("savedUsername");
+    const savedPassword = safeGet("savedPassword");
     
     if (savedUsername) {
       document.getElementById("username").value = savedUsername;
@@ -332,3 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+// ✅ PASTIKAN login() TERDAFTAR - Safari iOS tidak drop function reference
+window.login = window.login;
+console.log("login.js loaded OK");
