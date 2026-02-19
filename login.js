@@ -2,9 +2,9 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// Config Firebase (sama seperti di dashboard.html)
+// Config Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCP-Gha19gZ6ZkYCzZ9vh9QL2tKYmNVoCk",
   authDomain: "quartrix-eb95f.firebaseapp.com",
@@ -13,7 +13,6 @@ const firebaseConfig = {
   storageBucket: "quartrix-eb95f.firebasestorage.app",
   messagingSenderId: "589369640106",
   appId: "1:589369640106:web:7239da0bd98bae284fbcd3",
-  measurementId: "G-HG1GL8D03G"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -24,6 +23,7 @@ const auth = getAuth(app);
 window.login = async () => {
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
+  const rememberMe = document.getElementById("rememberMe")?.checked || false;
   const errorMsg = document.getElementById("errorMsg");
   const loginBtn = document.getElementById("loginBtn");
 
@@ -48,7 +48,18 @@ window.login = async () => {
       localStorage.setItem("role", "admin");
       localStorage.setItem("nama", "ADMIN");
       localStorage.setItem("absen", "-");
-      localStorage.setItem("uid", uid); // Simpan uid untuk referensi
+      localStorage.setItem("uid", uid);
+      
+      // Remember Me - Simpan kredensial jika checkbox dicentang
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("savedUsername", username);
+        localStorage.setItem("savedPassword", password);
+      } else {
+        localStorage.setItem("rememberMe", "false");
+        localStorage.removeItem("savedUsername");
+        localStorage.removeItem("savedPassword");
+      }
       
       window.location.href = "dashboard.html";
     } catch (error) {
@@ -71,7 +82,7 @@ window.login = async () => {
   loginBtn.textContent = "Masuk...";
 
   try {
-    const userRef = ref(db, "siswa/" + password); // Password adalah absen
+    const userRef = ref(db, "siswa/" + password);
     const snapshot = await get(userRef);
 
     // Remove loading state
@@ -82,7 +93,6 @@ window.login = async () => {
       const data = snapshot.val();
       // Validasi nama (case-insensitive)
       if (data.nama.toLowerCase() === username.toLowerCase()) {
-        // Firebase Anonymous Auth untuk dapat uid (supaya bisa menulis ke database)
         try {
           const userCredential = await signInAnonymously(auth);
           const uid = userCredential.uid;
@@ -91,7 +101,18 @@ window.login = async () => {
           localStorage.setItem("role", "siswa");
           localStorage.setItem("nama", data.nama);
           localStorage.setItem("absen", password);
-          localStorage.setItem("uid", uid); // Simpan uid untuk referensi
+          localStorage.setItem("uid", uid);
+          
+          // Remember Me - Simpan kredensial jika checkbox dicentang
+          if (rememberMe) {
+            localStorage.setItem("rememberMe", "true");
+            localStorage.setItem("savedUsername", username);
+            localStorage.setItem("savedPassword", password);
+          } else {
+            localStorage.setItem("rememberMe", "false");
+            localStorage.removeItem("savedUsername");
+            localStorage.removeItem("savedPassword");
+          }
           
           window.location.href = "dashboard.html";
         } catch (authError) {
@@ -116,8 +137,36 @@ window.login = async () => {
   }
 };
 
-// Allow Enter key to submit
+// Allow Enter key to submit and check for Remember Me on page load
 document.addEventListener("DOMContentLoaded", () => {
+  // CHECK: Jika user sudah login (Remember Me), redirect ke dashboard
+  const isLogin = localStorage.getItem("isLogin");
+  if (isLogin === "true") {
+    // User sudah login, redirect ke dashboard
+    window.location.href = "dashboard.html";
+    return;
+  }
+  
+  // LOAD: Isi otomatis jika ada data Remember Me
+  const rememberMe = localStorage.getItem("rememberMe");
+  if (rememberMe === "true") {
+    const savedUsername = localStorage.getItem("savedUsername");
+    const savedPassword = localStorage.getItem("savedPassword");
+    
+    if (savedUsername) {
+      document.getElementById("username").value = savedUsername;
+    }
+    if (savedPassword) {
+      document.getElementById("password").value = savedPassword;
+    }
+    
+    // Centang checkbox Remember Me
+    const rememberMeCheckbox = document.getElementById("rememberMe");
+    if (rememberMeCheckbox) {
+      rememberMeCheckbox.checked = true;
+    }
+  }
+  
   const passwordInput = document.getElementById("password");
   const usernameInput = document.getElementById("username");
 

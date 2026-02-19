@@ -939,10 +939,8 @@
             ? tugasSelesaiSnapshot.val()
             : {};
 
-          // Count total active tasks (exclude deleted tasks with tersedia: false)
-          const totalTugas = Object.values(semuaTugas).filter(
-            (t) => t.tersedia !== false,
-          ).length;
+          // Count all tasks in database (including unavailable/deleted)
+          const totalTugas = Object.keys(semuaTugas).length;
           const tugasSelesaiCount = Object.values(tugasSelesai).filter(
             (val) => val === true,
           ).length;
