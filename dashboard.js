@@ -1,4 +1,6 @@
-// Firebase SDK dan Semua Kode JS
+// dashboard.js - Firebase authentication for QUARTRIX dashboard
+// FIXED: iOS Safari authentication issues
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getDatabase,
@@ -16,6 +18,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Config Firebase Anda
@@ -45,6 +48,7 @@ function isIOSafari() {
 let persistenceSetupAttempted = false;
 
 // Fungsi untuk setup Firebase Auth persistence
+// FIX: Persistence harus di-set SEBELUM operasi auth apapun
 async function setupAuthPersistence() {
   // Cegah double setup
   if (persistenceSetupAttempted) {
@@ -55,18 +59,21 @@ async function setupAuthPersistence() {
   persistenceSetupAttempted = true;
   
   try {
+    // Cek apakah sudah ada session yang aktif
     if (auth.currentUser) {
       console.log("User already logged in:", auth.currentUser.uid);
       return auth.currentUser;
     }
     
-    try {
-      await setPersistence(auth, browserLocalPersistence);
-      console.log("Auth persistence set to: local");
-    } catch (persistenceError) {
-      console.warn("Local persistence failed, trying session:", persistenceError);
+    // 🔥 FIX UTAMA: Tentukan persistence berdasarkan browser SEBELUM auth operation
+    // iOS Safari → Gunakan session persistence (lebih stabil)
+    // Browser lain → Gunakan local persistence
+    if (isIOSafari()) {
       await setPersistence(auth, browserSessionPersistence);
-      console.log("Auth persistence set to: session");
+      console.log("iOS Safari → session persistence");
+    } else {
+      await setPersistence(auth, browserLocalPersistence);
+      console.log("Other browsers → local persistence");
     }
     
     // Debug info untuk iOS
@@ -81,40 +88,47 @@ async function setupAuthPersistence() {
   }
 }
 
-// Fungsi untuk retry anonymous sign-in dengan exponential backoff dan retry lebih banyak
-async function signInWithRetry(maxRetries = 5, initialDelay = 1000) {
-  let lastError = null;
-  
+// Fungsi untuk tunggu auth state siap (FIX #2)
+// Ini krusial di Safari - jangan redirect sebelum auth state ready
+function waitForAuthState() {
+  return new Promise((resolve) => {
+    // Langsung cek jika sudah ada user
+    if (auth.currentUser) {
+      console.log("User already available:", auth.currentUser.uid);
+      resolve(auth.currentUser);
+      return;
+    }
+    
+    // Kalau belum ada, tunggu onAuthStateChanged
+    const unsub = onAuthStateChanged(auth, user => {
+      if (user) {
+        unsub();
+        console.log("Auth state ready:", user.uid);
+        resolve(user);
+      }
+    });
+  });
+}
+
+// Fungsi untuk anonymous sign-in TANPA retry (FIX #3)
+// Firebase Auth tidak boleh di-retry karena akan merusak internal state
+async function signInOnce() {
+  // Setup persistence SEBELUM login (penting!)
   await setupAuthPersistence();
   
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`Anonymous sign-in attempt ${attempt}/${maxRetries}`);
-      const result = await signInAnonymously(auth);
-      console.log("Anonymous sign-in successful:", result.user.uid);
-      return result;
-    } catch (error) {
-      console.warn(`Attempt ${attempt} failed:`, error.message);
-      lastError = error;
-      
-      if (error.code === "auth/network-request-failed" || 
-          error.message.includes("net::ERR_CONNECTION_REFUSED")) {
-        const delay = initialDelay * Math.pow(2, attempt - 1) * (isIOSafari() ? 1.5 : 1);
-        console.log(`Waiting ${delay}ms before retry...`);
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      } else if (error.code === "auth/popup-closed-by-user") {
-        throw error;
-      } else {
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, initialDelay * Math.pow(2, attempt - 1)));
-        }
-      }
-    }
+  try {
+    console.log("Anonymous sign-in attempt (1x only)");
+    const result = await signInAnonymously(auth);
+    console.log("Anonymous sign-in successful:", result.user.uid);
+    
+    // 🔥 FIX: Tunggu auth state benar-benar siap sebelum return
+    await waitForAuthState();
+    
+    return result;
+  } catch (error) {
+    console.error("Anonymous sign-in failed:", error.message);
+    throw error;
   }
-  
-  throw lastError;
 }
 
 // Fungsi untuk sinkronkan status admin dari localStorage ke Firebase
@@ -145,11 +159,11 @@ async function syncAdminStatus() {
   return null;
 }
 
-// Login anonymous secara otomatis dengan retry
+// Login anonymous secara otomatis TANPA retry (FIX #3)
 async function initAuth() {
   try {
-    // Coba login dengan retry mechanism
-    await signInWithRetry(5);
+    // 🔥 FIX: Login 1x saja, tunggu auth state ready
+    await signInOnce();
     console.log("Anonymous login berhasil");
     
     try {

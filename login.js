@@ -1,8 +1,9 @@
 // login.js - Firebase authentication for QUARTRIX login
+// FIXED: iOS Safari authentication issues
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence, browserSessionPersistence, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Config Firebase
 const firebaseConfig = {
@@ -29,6 +30,7 @@ function isIOSafari() {
 let persistenceSetupAttempted = false;
 
 // Fungsi untuk setup Firebase Auth persistence
+// FIX: PENTING - Persistence harus di-set SEBELUM operasi auth apapun
 async function setupAuthPersistence() {
   // Cegah double setup
   if (persistenceSetupAttempted) {
@@ -39,21 +41,21 @@ async function setupAuthPersistence() {
   persistenceSetupAttempted = true;
   
   try {
-    // Cek apakah sudah ada session
+    // Cek apakah sudah ada session yang aktif
     if (auth.currentUser) {
       console.log("User already logged in:", auth.currentUser.uid);
       return auth.currentUser;
     }
     
-    // Coba set persistence - gunakan local untuk persist lebih lama di iOS
-    // Jika gagal, fallback ke session
-    try {
-      await setPersistence(auth, browserLocalPersistence);
-      console.log("Auth persistence set to: local");
-    } catch (persistenceError) {
-      console.warn("Local persistence failed, trying session:", persistenceError);
+    // 🔥 FIX UTAMA: Tentukan persistence berdasarkan browser SEBELUM auth operation
+    // iOS Safari → Gunakan session persistence (lebih stabil)
+    // Browser lain → Gunakan local persistence
+    if (isIOSafari()) {
       await setPersistence(auth, browserSessionPersistence);
-      console.log("Auth persistence set to: session");
+      console.log("iOS Safari → session persistence");
+    } else {
+      await setPersistence(auth, browserLocalPersistence);
+      console.log("Other browsers → local persistence");
     }
     
     // Debug info untuk iOS
@@ -68,45 +70,47 @@ async function setupAuthPersistence() {
   }
 }
 
-// Fungsi untuk retry anonymous sign-in dengan exponential backoff dan retry lebih banyak
-async function signInWithRetry(maxRetries = 5, initialDelay = 1000) {
-  let lastError = null;
-  
-  // Setup persistence sebelum login
+// Fungsi untuk tunggu auth state siap (FIX #2)
+// Ini krusial di Safari - jangan redirect sebelum auth state ready
+function waitForAuthState() {
+  return new Promise((resolve) => {
+    // Langsung cek jika sudah ada user
+    if (auth.currentUser) {
+      console.log("User already available:", auth.currentUser.uid);
+      resolve(auth.currentUser);
+      return;
+    }
+    
+    // Kalau belum ada, tunggu onAuthStateChanged
+    const unsub = onAuthStateChanged(auth, user => {
+      if (user) {
+        unsub();
+        console.log("Auth state ready:", user.uid);
+        resolve(user);
+      }
+    });
+  });
+}
+
+// Fungsi untuk anonymous sign-in TANPA retry (FIX #3)
+// Firebase Auth tidak boleh di-retry karena akan merusak internal state
+async function signInOnce() {
+  // Setup persistence SEBELUM login (penting!)
   await setupAuthPersistence();
   
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`Anonymous sign-in attempt ${attempt}/${maxRetries}`);
-      const result = await signInAnonymously(auth);
-      console.log("Anonymous sign-in successful:", result.user.uid);
-      return result;
-    } catch (error) {
-      console.warn(`Attempt ${attempt} failed:`, error.message);
-      lastError = error;
-      
-      // Check for specific iOS errors
-      if (error.code === "auth/network-request-failed" || 
-          error.message.includes("net::ERR_CONNECTION_REFUSED")) {
-        // Longer delay for network issues on iOS
-        const delay = initialDelay * Math.pow(2, attempt - 1) * (isIOSafari() ? 1.5 : 1);
-        console.log(`Waiting ${delay}ms before retry...`);
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      } else if (error.code === "auth/popup-closed-by-user") {
-        // User closed popup - don't retry automatically
-        throw error;
-      } else {
-        // Other errors - still retry with backoff
-        if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, initialDelay * Math.pow(2, attempt - 1)));
-        }
-      }
-    }
+  try {
+    console.log("Anonymous sign-in attempt (1x only)");
+    const result = await signInAnonymously(auth);
+    console.log("Anonymous sign-in successful:", result.user.uid);
+    
+    // 🔥 FIX: Tunggu auth state benar-benar siap sebelum return
+    await waitForAuthState();
+    
+    return result;
+  } catch (error) {
+    console.error("Anonymous sign-in failed:", error.message);
+    throw error;
   }
-  
-  throw lastError;
 }
 
 // Fungsi login yang dipanggil dari HTML
@@ -122,8 +126,8 @@ window.login = async () => {
   /* ADMIN */
   if (username === "admin" && password === "admin123") {
     try {
-      // Firebase Anonymous Auth untuk dapat uid - dengan retry penuh (5x)
-      const userCredential = await signInWithRetry(5);
+      // Firebase Anonymous Auth - 1x saja, tunggu auth state ready
+      const userCredential = await signInOnce();
       const uid = userCredential.uid;
       
       // Simpan status admin ke Firebase database
@@ -140,17 +144,24 @@ window.login = async () => {
       localStorage.setItem("absen", "-");
       localStorage.setItem("uid", uid);
       
-      // Remember Me - Simpan kredensial jika checkbox dicentang
+      // Remember Me - Handle berbeda untuk iOS Safari (FIX #4)
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
         localStorage.setItem("savedUsername", username);
-        localStorage.setItem("savedPassword", password);
+        // 🔥 FIX: Jangan simpan password di iOS Safari
+        if (!isIOSafari()) {
+          localStorage.setItem("savedPassword", password);
+        } else {
+          localStorage.removeItem("savedPassword");
+          console.log("iOS Safari: Password not saved for security");
+        }
       } else {
         localStorage.setItem("rememberMe", "false");
         localStorage.removeItem("savedUsername");
         localStorage.removeItem("savedPassword");
       }
       
+      // 🔥 FIX: Redirect setelah auth state siap
       window.location.href = "dashboard.html";
     } catch (error) {
       console.error("Error during admin login:", error);
@@ -197,8 +208,8 @@ window.login = async () => {
       // Validasi nama (case-insensitive)
       if (data.nama.toLowerCase() === username.toLowerCase()) {
         try {
-          // Gunakan retry mechanism penuh (5x) untuk anonymous auth di iOS
-          const userCredential = await signInWithRetry(5);
+          // Gunakan 1x login saja, tunggu auth state ready
+          const userCredential = await signInOnce();
           const uid = userCredential.uid;
           
           localStorage.setItem("isLogin", "true");
@@ -207,17 +218,24 @@ window.login = async () => {
           localStorage.setItem("absen", password);
           localStorage.setItem("uid", uid);
           
-          // Remember Me - Simpan kredensial jika checkbox dicentang
+          // Remember Me - Handle berbeda untuk iOS Safari (FIX #4)
           if (rememberMe) {
             localStorage.setItem("rememberMe", "true");
             localStorage.setItem("savedUsername", username);
-            localStorage.setItem("savedPassword", password);
+            // 🔥 FIX: Jangan simpan password di iOS Safari
+            if (!isIOSafari()) {
+              localStorage.setItem("savedPassword", password);
+            } else {
+              localStorage.removeItem("savedPassword");
+              console.log("iOS Safari: Password not saved for security");
+            }
           } else {
             localStorage.setItem("rememberMe", "false");
             localStorage.removeItem("savedUsername");
             localStorage.removeItem("savedPassword");
           }
           
+          // 🔥 FIX: Redirect setelah auth state siap
           window.location.href = "dashboard.html";
         } catch (authError) {
           console.error("Error during auth:", authError);
