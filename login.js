@@ -25,8 +25,19 @@ function isIOSafari() {
   return /iPad|iPhone|iPod/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua);
 }
 
+// Flag untuk mencegah double setup persistence
+let persistenceSetupAttempted = false;
+
 // Fungsi untuk setup Firebase Auth persistence
 async function setupAuthPersistence() {
+  // Cegah double setup
+  if (persistenceSetupAttempted) {
+    console.log("Persistence already setup, skipping...");
+    return auth.currentUser || null;
+  }
+  
+  persistenceSetupAttempted = true;
+  
   try {
     // Cek apakah sudah ada session
     if (auth.currentUser) {
@@ -44,6 +55,11 @@ async function setupAuthPersistence() {
       await setPersistence(auth, browserSessionPersistence);
       console.log("Auth persistence set to: session");
     }
+    
+    // Debug info untuk iOS
+    console.log("[iOS Debug] User Agent:", navigator.userAgent);
+    console.log("[iOS Debug] isIOSafari:", isIOSafari());
+    console.log("[iOS Debug] LocalStorage available:", typeof localStorage !== 'undefined');
     
     return null;
   } catch (error) {
@@ -106,8 +122,8 @@ window.login = async () => {
   /* ADMIN */
   if (username === "admin" && password === "admin123") {
     try {
-      // Firebase Anonymous Auth untuk dapat uid - dengan retry
-      const userCredential = await signInWithRetry(3);
+      // Firebase Anonymous Auth untuk dapat uid - dengan retry penuh (5x)
+      const userCredential = await signInWithRetry(5);
       const uid = userCredential.uid;
       
       // Simpan status admin ke Firebase database
@@ -181,8 +197,8 @@ window.login = async () => {
       // Validasi nama (case-insensitive)
       if (data.nama.toLowerCase() === username.toLowerCase()) {
         try {
-          // Gunakan retry mechanism untuk anonymous auth
-          const userCredential = await signInWithRetry(3);
+          // Gunakan retry mechanism penuh (5x) untuk anonymous auth di iOS
+          const userCredential = await signInWithRetry(5);
           const uid = userCredential.uid;
           
           localStorage.setItem("isLogin", "true");

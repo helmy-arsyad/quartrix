@@ -41,8 +41,19 @@ function isIOSafari() {
   return /iPad|iPhone|iPod/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua);
 }
 
+// Flag untuk mencegah double setup persistence
+let persistenceSetupAttempted = false;
+
 // Fungsi untuk setup Firebase Auth persistence
 async function setupAuthPersistence() {
+  // Cegah double setup
+  if (persistenceSetupAttempted) {
+    console.log("Persistence already setup, skipping...");
+    return auth.currentUser || null;
+  }
+  
+  persistenceSetupAttempted = true;
+  
   try {
     if (auth.currentUser) {
       console.log("User already logged in:", auth.currentUser.uid);
@@ -57,6 +68,11 @@ async function setupAuthPersistence() {
       await setPersistence(auth, browserSessionPersistence);
       console.log("Auth persistence set to: session");
     }
+    
+    // Debug info untuk iOS
+    console.log("[iOS Debug] User Agent:", navigator.userAgent);
+    console.log("[iOS Debug] isIOSafari:", isIOSafari());
+    console.log("[iOS Debug] LocalStorage available:", typeof localStorage !== 'undefined');
     
     return null;
   } catch (error) {
