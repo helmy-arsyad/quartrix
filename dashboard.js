@@ -32,6 +32,29 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
+// Fungsi untuk retry anonymous sign-in dengan exponential backoff
+async function signInWithRetry(maxRetries = 3) {
+  let lastError = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Anonymous sign-in attempt ${attempt}/${maxRetries}`);
+      const result = await signInAnonymously(auth);
+      return result;
+    } catch (error) {
+      console.warn(`Attempt ${attempt} failed:`, error.message);
+      lastError = error;
+      
+      // Wait before retry (exponential backoff: 500ms, 1000ms, 2000ms)
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, attempt - 1)));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
 // Fungsi untuk sinkronkan status admin dari localStorage ke Firebase
 async function syncAdminStatus() {
   const role = localStorage.getItem("role");
@@ -60,9 +83,11 @@ async function syncAdminStatus() {
   return null;
 }
 
-// Login anonymous secara otomatis
-signInAnonymously(auth)
-  .then(async () => {
+// Login anonymous secara otomatis dengan retry
+async function initAuth() {
+  try {
+    // Coba login dengan retry mechanism
+    await signInWithRetry(3);
     console.log("Anonymous login berhasil");
     
     try {
@@ -74,9 +99,19 @@ signInAnonymously(auth)
     }
     
     initApp(); // Jalankan app setelah auth berhasil
-  })
-  .catch((error) => {
+  } catch (error) {
     console.error("Error anonymous login:", error);
+    
+    // Tampilkan pesan error yang lebih spesifik ke user
+    let errorMessage = "Gagal terhubung ke server. Silakan refresh halaman ini.";
+    if (error.code === "auth/network-request-failed") {
+      errorMessage = "Tidak dapat terhubung ke server. Periksa koneksi internet Anda dan refresh halaman.";
+    } else if (error.code === "auth/popup-closed-by-user") {
+      errorMessage = "Popup ditutup sebelum proses selesai. Silakan refresh halaman.";
+    } else if (error.code === "auth/internal-error") {
+      errorMessage = "Terjadi kesalahan internal. Silakan refresh halaman.";
+    }
+    
     // Tampilkan pesan error ke user
     document.body.innerHTML = `
     <div style="
@@ -92,7 +127,7 @@ signInAnonymously(auth)
     ">
       <div>
         <h2>⚠️ Terjadi Kesalahan</h2>
-        <p>Gagal terhubung ke server. Silakan refresh halaman ini.</p>
+        <p>${errorMessage}</p>
         <p style="font-size:0.8rem;margin-top:10px;color:#ccc;">Error: ${error.message}</p>
         <button onclick="location.href='login.html'"
           style="
@@ -110,7 +145,11 @@ signInAnonymously(auth)
       </div>
     </div>
   `;
-  });
+  }
+}
+
+// Mulai proses autentikasi
+initAuth();
 
 async function hapusTugasDanStatus(tugasKey) {
   // Instead of removing, mark task as deleted (tidak tersedia)
@@ -385,7 +424,7 @@ function initApp() {
     { nama: "NATHANAEL ABIRA SETYO BUDI", absen: 26 },
     { nama: "NATHANIA NARESWARI BRAHMA PUTRI", absen: 27 },
     { nama: "NIDA ULHAQ NUR SYIFA", absen: 28 },
-    { nama: "NISRINA MARYAM", absen: 29 },
+    { nama: "NISRNA MARYAM", absen: 29 },
     { nama: "PHILLIPUS ADE MAHENDRA PUTRA", absen: 30 },
     { nama: "PRISYA NOVI ANGGRAENI", absen: 31 },
     { nama: "RENITA ISNABILA", absen: 32 },
