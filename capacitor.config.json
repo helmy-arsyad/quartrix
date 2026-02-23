@@ -1,0 +1,16 @@
+{
+  "appId": "com.quartrix.app",
+  "appName": "QUARTRIX",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "cordova": {},
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "cordovaLinkerFlags": ["-ObjC"]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

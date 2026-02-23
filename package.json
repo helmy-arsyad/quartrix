@@ -1,0 +1,17 @@
+{
+  "name": "quartrix-app",
+  "version": "1.0.0",
+  "description": "QUARTRIX - Aplikasi Android & iOS",
+  "main": "index.html",
+  "scripts": {
+    "cap-add": "npx cap add android",
+    "cap-add-ios": "npx cap add ios",
+    "cap-sync": "npx cap sync",
+    "cap-open-android": "npx cap open android",
+    "cap-open-ios": "npx cap open ios",
+    "build": "echo 'Build complete - web files ready for Capacitor'"
+  },
+  "keywords": ["quartrix", "school", "app", "capacitor"],
+  "author": "QUARTRIX",
+  "license": "MIT"
+}
