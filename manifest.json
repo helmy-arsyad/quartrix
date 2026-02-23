@@ -1,0 +1,26 @@
+{
+  "name": "QUARTRIX - Pasti Asik",
+  "short_name": "QUARTRIX",
+  "description": "Platform interaktif untuk siswa SMA Negeri 3 Blitar",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#5a3e2b",
+  "theme_color": "#ff8c42",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://i.ibb.co.com/7xxVWwH7/IMG-8428.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.ibb.co.com/7xxVWwH7/IMG-8428.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["education", "lifestyle"],
+  "lang": "id-ID",
+  "scope": "/",
+  "prefer_related_applications": false
+}

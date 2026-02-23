@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>QUARTRIX - Pasti Asik</title>
   <link rel="icon" href="https://i.ibb.co.com/7xxVWwH7/IMG-8428.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#ff8c42" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
     /* Reset dan font */
     * {
@@ -569,6 +573,19 @@
     if (role) {
       loginBtn.textContent = "Dashboard";
       loginBtn.href = "dashboard.html";
+    }
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(registration => {
+            console.log('SW registered:', registration.scope);
+          })
+          .catch(error => {
+            console.log('SW registration failed:', error);
+          });
+      });
     }
   </script>
 </body>
