@@ -158,6 +158,19 @@ async function doSaveProfile() {
     alert("Profil berhasil disimpan!");
 
     if (newAbsenLogin !== oldAbsen) {
+      // Pindahkan juga data tugas selesai dari absen lama ke absen baru
+      const oldTugasSelesaiRef = ref(db, "tugasSelesai/" + oldAbsen);
+      const oldTugasSnapshot = await get(oldTugasSelesaiRef);
+      
+      if (oldTugasSnapshot.exists()) {
+        const oldTugasData = oldTugasSnapshot.val();
+        // Set data tugas selesai ke absen baru
+        await set(ref(db, "tugasSelesai/" + newAbsenLogin), oldTugasData);
+        // Hapus data tugas selesai dari absen lama
+        await remove(oldTugasSelesaiRef);
+        console.log("Data tugas selesai berhasil dipindahkan dari absen", oldAbsen, "ke", newAbsenLogin);
+      }
+      
       await remove(ref(db, "siswa/" + oldAbsen));
       alert("Absen login diubah. Silakan login ulang.");
       localStorage.clear();
