@@ -1238,72 +1238,58 @@ function initApp() {
      FIREBASE CLOUD MESSAGING - PUSH NOTIFICATION
      ========================================== */
 
-  // Initialize Firebase Messaging - AUTO REQUEST PERMISSION
-  let messaging = null;
-  let notificationPermission = null;
-  let fcmTokenSaved = false;
-
-  async function initFirebaseMessaging() {
-    // Only for students (not admin)
+  // Langsung minta izin notifikasi saat halaman dimuat (tanpa cek status dulu)
+  async function requestNotificationImmediately() {
+    // Skip untuk admin
     if (role === 'admin') {
       console.log('Admin user, skipping notification setup');
       return;
     }
 
-    console.log('Initializing Firebase Messaging for student...');
-
-    if (!('serviceWorker' in navigator)) {
-      console.log("Service Worker not supported");
-      return;
-    }
-
-    // Check if Notification API is supported
+    // Cek apakah browser support Notification API
     if (!('Notification' in window)) {
-      console.log('Browser Notification API not supported - skipping');
+      console.log('Browser tidak mendukung notifikasi');
       return;
     }
 
-    // Check current permission status
-    const currentPermission = Notification.permission;
-    console.log('Current notification permission:', currentPermission);
+    // Langsung minta izin tanpa cek status dulu
+    try {
+      console.log('Requesting notification permission SEKARANG...');
+      const permission = await Notification.requestPermission();
+      console.log('Permission result:', permission);
 
-    if (currentPermission === 'granted') {
-      console.log('Notification permission already granted');
-      await getFCMToken();
-      return;
-    }
-
-    // Request permission immediately (skip denied check to avoid showing error)
-    if (currentPermission === 'default') {
-      try {
-        console.log('Requesting notification permission...');
-        const permission = await Notification.requestPermission();
-        notificationPermission = permission;
-        console.log('Permission result:', permission);
-
-        if (permission === 'granted') {
-          console.log('Notification permission granted');
-          await getFCMToken();
-        } else {
-          console.log('Notification permission denied:', permission);
-        }
-      } catch (error) {
-        console.error('Error requesting notification permission:', error);
+      if (permission === 'granted') {
+        console.log('Notifikasi diizinkan! Ambil FCM token...');
+        await getFCMToken();
+      } else {
+        console.log('Izin ditolak:', permission);
       }
+    } catch (error) {
+      console.error('Error minta izin notifikasi:', error);
     }
   }
 
   async function registerServiceWorker() {
     if ("serviceWorker" in navigator) {
-      const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      console.log("Service Worker registered:", registration);
-      return registration;
+      try {
+        const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        console.log("Service Worker registered:", registration);
+        return registration;
+      } catch (error) {
+        console.error("Error register service worker:", error);
+        return null;
+      }
     }
+    return null;
   }
 
   async function getFCMToken() {
     try {
       const registration = await registerServiceWorker();
+      if (!registration) {
+        console.log("Gagal registrasi service worker");
+        return;
+      }
 
       messaging = getMessaging(app);
 
@@ -1327,6 +1313,12 @@ function initApp() {
       console.error("Error getting FCM token:", error);
     }
   }
+
+  // Variabel untuk messaging
+  let messaging = null;
+
+  // Minta notifikasi SEGERA setelah role diketahui (tanpa timeout)
+  requestNotificationImmediately();
 
 // Global function to request notification permission (called from badge click)
   window.requestNotificationPermission = async function () {
@@ -1359,12 +1351,8 @@ function initApp() {
     }
   };
 
-  // Listen for foreground messages
+  // Listen for foreground messages (if permission already granted)
   if (role !== 'admin') {
-    // Initialize messaging immediately when dashboard loads
-    initFirebaseMessaging();
-
-    // Listen for messages when app is in foreground
     try {
       const fgMessaging = getMessaging(app);
       onMessage(fgMessaging, (payload) => {
