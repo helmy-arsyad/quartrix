@@ -1328,7 +1328,7 @@ function initApp() {
     }
   }
 
-  // Global function to request notification permission (called from badge click)
+// Global function to request notification permission (called from badge click)
   window.requestNotificationPermission = async function () {
     console.log('Manual request for notification permission');
 
@@ -1338,20 +1338,18 @@ function initApp() {
     }
 
     if (Notification.permission === 'granted') {
-      alert('Notifikasi sudah diaktifkan!');
+      alert('Notifikasi sudah diaktifkan! ✅');
       return;
     }
 
     if (Notification.permission === 'denied') {
-      alert('Notifikasi diblokir. Silakan aktifkan di pengaturan browser Anda.');
+      alert('Notifikasi diblokir. Silakan aktifkan di pengaturan browser Anda (Settings > Notifications).');
       return;
     }
 
     // Request permission
     const permission = await Notification.requestPermission();
     console.log('Permission result:', permission);
-
-    updateNotificationStatus(permission);
 
     if (permission === 'granted') {
       alert('Notifikasi berhasil diaktifkan! 🔔');
