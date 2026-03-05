@@ -186,7 +186,8 @@ async function initAuth() {
       // Lanjutkan meskipun sync gagal
     }
 
-    initApp(); // Jalankan app setelah auth berhasil
+    initApp();
+    initFCM();  // Jalankan app setelah auth berhasil
   } catch (error) {
     console.error("Error anonymous login:", error);
 
@@ -1294,7 +1295,7 @@ function initApp() {
       messaging = getMessaging(app);
 
       const token = await getToken(messaging, {
-        vapidKey: "BM4m_ApWQwhviB9RxhWSfLA_3b2DxmTFAq5iw4c5VMZkRUc7eym1UljONHPNxyPdy_neOthhF2q4dMF2e0JNcAM",
+        vapidKey: "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ",
         serviceWorkerRegistration: registration
       });
 
@@ -1387,5 +1388,63 @@ function initApp() {
     } catch (error) {
       console.log('Foreground messaging not available:', error);
     }
+  }
+}
+async function initFCM() {
+  try {
+
+    if (!("serviceWorker" in navigator)) {
+      console.log("Service Worker tidak didukung");
+      return;
+    }
+
+    console.log("Registering Service Worker...");
+
+    const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+    console.log("Service Worker registered:", registration);
+
+    const messaging = getMessaging(app);
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      console.log("Permission not granted");
+      return;
+    }
+
+    const token = await getToken(messaging, {
+      vapidKey: "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ",
+      serviceWorkerRegistration: registration
+    });
+
+    if (!token) {
+      console.log("Token tidak didapat");
+      return;
+    }
+
+    console.log("FCM Token:", token);
+
+    await set(ref(db, "fcmTokens/" + Date.now()), {
+      token: token,
+      createdAt: new Date().toISOString()
+    });
+
+    console.log("Token berhasil disimpan ke RTDB");
+
+    onMessage(messaging, (payload) => {
+      console.log("Foreground message:", payload);
+
+      const title = payload.notification?.title || "Tugas Baru!";
+      const body = payload.notification?.body || "Admin menambahkan tugas baru";
+
+      new Notification(title, {
+        body: body,
+        icon: "https://i.ibb.co/7xxVWwH7/IMG-8428.png"
+      });
+    });
+
+  } catch (err) {
+    console.error("FCM error:", err);
   }
 }
