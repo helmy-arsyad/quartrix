@@ -20,6 +20,12 @@ import {
   browserSessionPersistence,
   onAuthStateChanged,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getMessaging,
+  getToken,
+  onMessage,
+  deleteToken,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 // Config Firebase Anda
 const firebaseConfig = {
@@ -805,7 +811,7 @@ function initApp() {
     tambahTugas();
   });
 
-  function tambahTugas() {
+  async function tambahTugas() {
     console.log("Fungsi tambahTugas dipanggil");
     if (role !== "admin") {
       console.log("Role bukan admin:", role);
@@ -827,7 +833,19 @@ function initApp() {
       mapel: mapel,
       deskripsi: desc,
       deadline: dead,
+      tersedia: true,
+      createdAt: Date.now()
     });
+    fetch("/sendNotification", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    mapel: mapel,
+    deskripsi: desc
+  })
+});
     mapelBaru.value = "";
     tugasBaru.value = "";
     deadlineBaru.value = "";
@@ -1036,4 +1054,345 @@ function initApp() {
 
   // Expose functions to window for onclick handlers
   window.lihatProfilSiswa = lihatProfilSiswa;
+
+  /* ==========================================
+     NOTIFIKASI WHATSAPP-STYLE - NEW TASKS
+     ========================================== */
+  
+  // Fungsi untuk memainkan suara notifikasi
+  function playNotificationSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.3);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {
+      console.log("Audio notification not supported");
+    }
+  }
+
+  // Fungsi untuk menampilkan toast notifikasi WhatsApp-style
+  window.showToastNotification = function(title, message, isNew = true) {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <div class="toast-icon">📝</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+      ${isNew ? '<span class="toast-new-badge">BARU</span>' : ''}
+    `;
+
+    toastContainer.appendChild(toast);
+    playNotificationSound();
+
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.remove();
+      }
+    }, 5000);
+  };
+
+  // Simpan timestamp terakhir посещение tugas
+  function saveLastVisitTugas() {
+    const now = new Date().toISOString();
+    localStorage.setItem('lastVisitTugas_' + absen, now);
+  }
+
+  // Dapatkan timestamp terakhir посещение tugas
+  function getLastVisitTugas() {
+    return localStorage.getItem('lastVisitTugas_' + absen);
+  }
+
+  // Simpan ID tugas terakhir yang sudah dilihat
+  function saveLastSeenTaskId(taskId) {
+    localStorage.setItem('lastSeenTaskId_' + absen, taskId);
+  }
+
+  // Dapatkan ID tugas terakhir yang sudah dilihat
+  function getLastSeenTaskId() {
+    return localStorage.getItem('lastSeenTaskId_' + absen);
+  }
+
+  // Cek apakah ada tugas baru (untuk siswa saat load halaman)
+  async function checkForNewTasks() {
+    if (role === 'admin') return;
+    
+    try {
+      const tugasSnapshot = await get(ref(db, 'tugas'));
+      if (!tugasSnapshot.exists()) return;
+
+      const tugasData = tugasSnapshot.val();
+      const lastSeenTaskId = getLastSeenTaskId();
+      const lastVisit = getLastVisitTugas();
+      
+      let newTasksCount = 0;
+      let latestTask = null;
+      const availableTasks = [];
+
+      for (const [key, value] of Object.entries(tugasData)) {
+        if (value.tersedia === false) continue;
+        
+        availableTasks.push({ ...value, key: key });
+        
+        if (lastVisit) {
+          const taskCreated = value.createdAt || value.deadline;
+          if (taskCreated && new Date(taskCreated) > new Date(lastVisit)) {
+            newTasksCount++;
+          }
+        }
+        
+        if (!latestTask || (value.createdAt && (!latestTask.createdAt || new Date(value.createdAt) > new Date(latestTask.createdAt)))) {
+          latestTask = { ...value, key: key };
+        }
+      }
+
+      if (latestTask) {
+        saveLastSeenTaskId(latestTask.key);
+      }
+
+      if (!lastVisit && availableTasks.length > 0) {
+        window.showToastNotification(
+          'Selamat Datang! 📚',
+          `Ada ${availableTasks.length} tugas yang perlu diselesaikan`,
+          false
+        );
+      } else if (newTasksCount > 0) {
+        window.showToastNotification(
+          'Tugas Baru! 📝',
+          `Admin telah menambahkan ${newTasksCount} tugas baru. Check sekarang!`,
+          true
+        );
+      }
+
+      saveLastVisitTugas();
+      
+    } catch (error) {
+      console.error('Error checking new tasks:', error);
+    }
+  }
+
+  // Modifikasi Firebase listener untuk mendeteksi tugas baru secara real-time
+  let previousTaskCount = 0;
+  let firstLoad = true;
+
+  onValue(tugasRef, (snapshot) => {
+    const data = snapshot.val();
+    tugasData = data ? Object.values(data) : [];
+    tugasKeys = data ? Object.keys(data) : [];
+    
+    if (role !== 'admin' && !firstLoad) {
+      const availableTasks = tugasData.filter(t => t.tersedia !== false);
+      
+      if (availableTasks.length > previousTaskCount && previousTaskCount > 0) {
+        const latestTask = availableTasks
+          .sort((a, b) => {
+            const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+            return dateB - dateA;
+          })[0];
+
+        if (latestTask) {
+          window.showToastNotification(
+            'Tugas Baru Ditambahkan! 📝',
+            `${latestTask.mapel}: ${latestTask.deskripsi.substring(0, 50)}${latestTask.deskripsi.length > 50 ? '...' : ''}`,
+            true
+          );
+        }
+      }
+      
+      previousTaskCount = availableTasks.length;
+    }
+    
+    firstLoad = false;
+    renderTugas();
+    
+    if (role !== 'admin') {
+      saveLastVisitTugas();
+    }
+  });
+
+  // Pengecekan tugas baru saat halaman dimuat (untuk siswa)
+  if (role !== 'admin') {
+    setTimeout(() => {
+      checkForNewTasks();
+    }, 2000);
+  }
+
+  /* ==========================================
+     FIREBASE CLOUD MESSAGING - PUSH NOTIFICATION
+     ========================================== */
+  
+  // Initialize Firebase Messaging - AUTO REQUEST PERMISSION
+  let messaging = null;
+  let notificationPermission = null;
+  let fcmTokenSaved = false;
+  
+  async function initFirebaseMessaging() {
+    // Only for students (not admin)
+    if (role === 'admin') {
+      console.log('Admin user, skipping notification setup');
+      return;
+    }
+    
+    console.log('Initializing Firebase Messaging for student...');
+    
+    // Check if browser supports Firebase Messaging
+    if (!('firebase' in window) || typeof getMessaging === 'undefined') {
+      console.log('Firebase Messaging not supported - skipping');
+      return;
+    }
+    
+    // Check if Notification API is supported
+    if (!('Notification' in window)) {
+      console.log('Browser Notification API not supported - skipping');
+      return;
+    }
+    
+    // Check current permission status
+    const currentPermission = Notification.permission;
+    console.log('Current notification permission:', currentPermission);
+    
+    if (currentPermission === 'granted') {
+      console.log('Notification permission already granted');
+      await getFCMToken();
+      return;
+    }
+    
+    // Request permission immediately (skip denied check to avoid showing error)
+    if (currentPermission === 'default') {
+      try {
+        console.log('Requesting notification permission...');
+        const permission = await Notification.requestPermission();
+        notificationPermission = permission;
+        console.log('Permission result:', permission);
+        
+        if (permission === 'granted') {
+          console.log('Notification permission granted');
+          await getFCMToken();
+        } else {
+          console.log('Notification permission denied:', permission);
+        }
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+      }
+    }
+  }
+  
+  async function getFCMToken() {
+    try {
+      messaging = getMessaging(app);
+      
+      // Get FCM token with user's VAPID key
+      const token = await getToken(messaging, {
+        vapidKey: 'BM4m_ApWQwhviB9RxhWSfLA_3b2DxmTFAq5iw4c5VMZkRUc7eym1UljONHPNxyPdy_neOthhF2q4dMF2e0JNcAM'
+      });
+      
+      if (token) {
+        console.log('FCM Token obtained:', token);
+        
+        // Save token to Firebase with student's absen
+        await set(ref(db, 'fcmTokens/' + absen), {
+          token: token,
+          nama: nama,
+          updatedAt: new Date().toISOString()
+        });
+        
+        fcmTokenSaved = true;
+        console.log('FCM Token saved to Firebase');
+      }
+    } catch (error) {
+      console.error('Error getting FCM token:', error);
+    }
+  }
+  
+  // Global function to request notification permission (called from badge click)
+  window.requestNotificationPermission = async function() {
+    console.log('Manual request for notification permission');
+    
+    if (!('Notification' in window)) {
+      alert('Browser Anda tidak mendukung notifikasi!');
+      return;
+    }
+    
+    if (Notification.permission === 'granted') {
+      alert('Notifikasi sudah diaktifkan!');
+      return;
+    }
+    
+    if (Notification.permission === 'denied') {
+      alert('Notifikasi diblokir. Silakan aktifkan di pengaturan browser Anda.');
+      return;
+    }
+    
+    // Request permission
+    const permission = await Notification.requestPermission();
+    console.log('Permission result:', permission);
+    
+    updateNotificationStatus(permission);
+    
+    if (permission === 'granted') {
+      alert('Notifikasi berhasil diaktifkan! 🔔');
+      await getFCMToken();
+    } else {
+      alert('Izin notifikasi ditolak.');
+    }
+  };
+  
+  // Listen for foreground messages
+  if (role !== 'admin') {
+    // Initialize messaging immediately when dashboard loads
+    initFirebaseMessaging();
+    
+    // Listen for messages when app is in foreground
+    try {
+      const fgMessaging = getMessaging(app);
+      onMessage(fgMessaging, (payload) => {
+        console.log('Foreground message received:', payload);
+        
+        // Show in-app notification
+        const notificationTitle = payload.notification?.title || 'Tugas Baru!';
+        const notificationBody = payload.notification?.body || 'Admin telah menambahkan tugas baru';
+        
+        window.showToastNotification(notificationTitle, notificationBody, true);
+        
+        // Also show browser notification if permission granted
+        if (Notification.permission === 'granted') {
+          // Check if browser supports notifications
+          if ('Notification' in window) {
+            const browserNotif = new Notification(notificationTitle, {
+              body: notificationBody,
+              icon: 'https://i.ibb.co.com/7xxVWwH7/IMG-8428.png',
+              badge: 'https://i.ibb.co.com/7xxVWwH7/IMG-8428.png',
+              tag: 'tugas-notification',
+              requireInteraction: true,
+              vibrate: [200, 100, 200]
+            });
+            
+            browserNotif.onclick = function() {
+              window.focus();
+              this.close();
+            };
+          }
+        }
+      });
+    } catch (error) {
+      console.log('Foreground messaging not available:', error);
+    }
+  }
 }

@@ -1038,6 +1038,111 @@
         color: #ff8c42;
         font-size: 1.2rem;
       }
+
+      /* TOAST NOTIFICATION - WhatsApp Style */
+      #toastContainer {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 350px;
+      }
+
+      .toast {
+        background: #fff;
+        color: #333;
+        padding: 16px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        animation: slideInRight 0.4s ease, fadeOut 0.4s ease 4.6s forwards;
+        border-left: 4px solid #ff8c42;
+      }
+
+      .toast-icon {
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+
+      .toast-content {
+        flex: 1;
+      }
+
+      .toast-title {
+        font-weight: 700;
+        font-size: 14px;
+        color: #1a1a1a;
+        margin-bottom: 2px;
+      }
+
+      .toast-message {
+        font-size: 13px;
+        color: #666;
+        line-height: 1.3;
+      }
+
+      .toast-new-badge {
+        background: #ff8c42;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+      }
+
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+      }
+
+      /* Notification Badge for new tasks count */
+      .new-tasks-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #e74c3c;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
     </style>
   </head>
 
@@ -1148,6 +1253,9 @@
     </div>
 
     <footer>&copy; 2025 QUARTRIX. Semua hak cipta dilindungi.</footer>
+
+    <!-- TOAST NOTIFICATION - WhatsApp Style -->
+    <div id="toastContainer"></div>
 
     <!-- Floating Button: Lihat Daftar Semua Siswa (Bottom Left) -->
     <button id="btnDaftarSemuaSiswaFloating" class="daftar-siswa-btn">
