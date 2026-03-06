@@ -1,5 +1,5 @@
 const admin = require("firebase-admin");
-const fetch = require("node-fetch");
+
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
@@ -9,9 +9,6 @@ admin.initializeApp({
 });
 
 const db = admin.database();
-
-const SERVER_KEY =
-  "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ";
 
 async function kirimNotifikasiTugas(mapel, deskripsi) {
   const snapshot = await db.ref("fcmTokens").once("value");
@@ -27,24 +24,17 @@ async function kirimNotifikasiTugas(mapel, deskripsi) {
     tokens.push(child.val().token);
   });
 
-  for (const token of tokens) {
-    await fetch("https://fcm.googleapis.com/fcm/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "key=" + SERVER_KEY,
-      },
-      body: JSON.stringify({
-        to: token,
-        notification: {
-          title: "📝 Tugas Baru Ditambahkan",
-          body: `${mapel} - ${deskripsi.substring(0, 60)}`,
-        },
-      }),
-    });
-  }
+  const message = {
+    notification: {
+      title: "📝 Tugas Baru Ditambahkan",
+      body: `${mapel} - ${deskripsi.substring(0, 60)}`,
+    },
+    tokens: tokens,
+  };
 
-  console.log("Notifikasi terkirim ke semua siswa");
+  const response = await admin.messaging().sendEachForMulticast(message);
+
+  console.log("Notifikasi terkirim:", response.successCount);
 }
 
 module.exports = kirimNotifikasiTugas;

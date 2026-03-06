@@ -249,7 +249,7 @@ async function hapusTugasDanStatus(tugasKey) {
   await set(ref(db, "tugas/" + tugasKey + "/tersedia"), false);
 }
 
-function initApp() {
+async function initApp() {
   /* LOGIN */
   const role = localStorage.getItem("role");
   const nama = localStorage.getItem("nama");
@@ -806,11 +806,47 @@ function initApp() {
   });
 
   // Event listener untuk tombol tambah tugas
-  const btnTambahTugas = document.getElementById("btnTambahTugas");
-  btnTambahTugas.addEventListener("click", function () {
-    console.log("Tombol tambah tugas diklik");
-    tambahTugas();
+  document.getElementById("btnTambahTugas").addEventListener("click", async () => {
+  const mapel = document.getElementById("mapelBaru").value;
+  const deskripsi = document.getElementById("tugasBaru").value;
+  const deadline = document.getElementById("deadlineBaru").value;
+
+  if (!mapel || !deskripsi) {
+    alert("Isi mapel dan deskripsi dulu");
+    return;
+  }
+
+  // SIMPAN KE FIREBASE
+  await push(ref(db, "tugas"), {
+    mapel: mapel,
+    deskripsi: deskripsi,
+    deadline: deadline,
+    waktu: Date.now()
   });
+
+  console.log("Tugas tersimpan");
+
+  // KIRIM NOTIFIKASI KE SERVER
+  try {
+    await fetch("https://quartrix-production.up.railway.app/sendNotification", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mapel: mapel,
+        deskripsi: deskripsi
+      })
+    });
+
+    console.log("Notifikasi terkirim");
+  } catch (err) {
+    console.error("Gagal kirim notifikasi", err);
+  }
+
+  document.getElementById("mapelBaru").value = "";
+  document.getElementById("tugasBaru").value = "";
+});
 
   async function tambahTugas() {
     console.log("Fungsi tambahTugas dipanggil");
@@ -860,6 +896,17 @@ function initApp() {
       alert("Tugas dan data pengerjaan siswa berhasil dihapus!");
     }
   }
+
+  await fetch("https://quartrix-production.up.railway.app/sendNotification", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      mapel: mapel,
+      deskripsi: deskripsi
+    })
+  });
 
   window.toggleSelesai = async (key, checked) => {
     if (role === "admin") return;
