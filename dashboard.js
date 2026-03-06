@@ -187,7 +187,7 @@ async function initAuth() {
     }
 
     initApp();
-    initFCM();  // Jalankan app setelah auth berhasil
+    // initFCM() dihapus karena sudah ditangani di initApp()
   } catch (error) {
     console.error("Error anonymous login:", error);
 
@@ -1263,7 +1263,7 @@ async function initApp() {
      FIREBASE CLOUD MESSAGING - PUSH NOTIFICATION
      ========================================== */
 
-  // Langsung minta izin notifikasi saat halaman dimuat (tanpa cek status dulu)
+  // Langsung minta izin notifikasi saat halaman dimuat (dengan cek permission dulu)
   async function requestNotificationImmediately() {
     // Skip untuk admin
     if (role === 'admin') {
@@ -1277,9 +1277,16 @@ async function initApp() {
       return;
     }
 
-    // Langsung minta izin tanpa cek status dulu
+    // CEK DULU: Jika sudah granted, langsung ambil token
+    if (Notification.permission === 'granted') {
+      console.log('Permission already granted, getting FCM token...');
+      await getFCMToken();
+      return;
+    }
+
+    // Jika belum granted, baru minta izin
     try {
-      console.log('Requesting notification permission SEKARANG...');
+      console.log('Requesting notification permission...');
       const permission = await Notification.requestPermission();
       console.log('Permission result:', permission);
 
@@ -1309,6 +1316,15 @@ async function initApp() {
   }
 
   async function getFCMToken() {
+
+    // DEBUG: Cek nilai absen
+    console.log("ABSEN:", absen);
+
+    // GUARD: Jika absen tidak ada, skip
+    if (!absen) {
+      console.log("Absen belum ada, skip FCM");
+      return;
+    }
 
     // CEGAH DUPLIKAT DI BROWSER
     if (localStorage.getItem("fcmTokenSaved") === "true") {
@@ -1468,9 +1484,11 @@ async function initFCM() {
 
     console.log("FCM Token:", token);
 
-    await set(ref(db, "fcmTokens/" + Date.now()), {
+    // Gunakan absen sebagai key (bukan Date.now() yang membuat duplikat)
+    await set(ref(db, "fcmTokens/" + absen), {
       token: token,
-      createdAt: new Date().toISOString()
+      nama: localStorage.getItem("nama"),
+      updatedAt: new Date().toISOString()
     });
 
     console.log("Token berhasil disimpan ke RTDB");
