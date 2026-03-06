@@ -1339,23 +1339,21 @@ async function initApp() {
 
       if (!token) return;
 
-      // Cek apakah token sudah ada di database
-      const tokenRef = ref(db, "fcmTokens/" + token);
-      const snapshot = await get(tokenRef);
-
-      if (snapshot.exists()) {
-        // Token sudah ada, cek apakah absen sama
-        const existingData = snapshot.val();
-        if (existingData.absen === absen) {
-          console.log("Token sama dan absen sama, tidak perlu update");
+      // CEK LEBIH KOMPLIT: Cek apakah token ini sudah ada di database
+      const allTokensRef = ref(db, "fcmTokens");
+      const allSnapshot = await get(allTokensRef);
+      
+      if (allSnapshot.exists()) {
+        const allTokens = allSnapshot.val();
+        // Cek apakah token sudah ada sebagai key
+        if (allTokens.hasOwnProperty(token)) {
+          console.log("Token sudah ada di database (sebagai key), skip save");
           return;
-        } else {
-          // Token sama tapi absen berbeda - ini case aneh, tetap update
-          console.log("Token sama tapi absen berbeda, update data");
         }
       }
 
-      // Simpan atau update token
+      // Simpan token dengan key = token
+      const tokenRef = ref(db, "fcmTokens/" + token);
       await set(tokenRef, {
         nama: nama,
         absen: absen
