@@ -807,27 +807,58 @@ async function initApp() {
 
   // Event listener untuk tombol tambah tugas
   document.getElementById("btnTambahTugas").addEventListener("click", async () => {
-  const mapel = document.getElementById("mapelBaru").value;
-  const deskripsi = document.getElementById("tugasBaru").value;
-  const deadline = document.getElementById("deadlineBaru").value;
+    const mapel = document.getElementById("mapelBaru").value;
+    const deskripsi = document.getElementById("tugasBaru").value;
+    const deadline = document.getElementById("deadlineBaru").value;
 
-  if (!mapel || !deskripsi) {
-    alert("Isi mapel dan deskripsi dulu");
-    return;
-  }
+    if (!mapel || !deskripsi) {
+      alert("Isi mapel dan deskripsi dulu");
+      return;
+    }
 
-  // SIMPAN KE FIREBASE
-  await push(ref(db, "tugas"), {
-    mapel: mapel,
-    deskripsi: deskripsi,
-    deadline: deadline,
-    waktu: Date.now()
+    // SIMPAN KE FIREBASE
+    await push(ref(db, "tugas"), {
+      mapel: mapel,
+      deskripsi: deskripsi,
+      deadline: deadline,
+      waktu: Date.now()
+    });
+
+    console.log("Tugas tersimpan");
+
+    // KIRIM NOTIFIKASI KE SERVER
+    try {
+      await fetch("https://quartrix-production.up.railway.app/sendNotification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          mapel: mapel,
+          deskripsi: deskripsi
+        })
+      });
+
+      console.log("Notifikasi terkirim");
+    } catch (err) {
+      console.error("Gagal kirim notifikasi", err);
+    }
+
+    document.getElementById("mapelBaru").value = "";
+    document.getElementById("tugasBaru").value = "";
   });
 
-  console.log("Tugas tersimpan");
+  async function tambahTugas() {
+    const mapel = mapelBaru.value.trim();
+    const desc = tugasBaru.value.trim();
+    const deadline = deadlineBaru.value;
 
-  // KIRIM NOTIFIKASI KE SERVER
-  try {
+    if (!mapel || !desc) {
+      alert("Mapel dan deskripsi harus diisi!");
+      return;
+    }
+
+    // kirim notifikasi ke server Railway
     await fetch("https://quartrix-production.up.railway.app/sendNotification", {
       method: "POST",
       headers: {
@@ -835,47 +866,16 @@ async function initApp() {
       },
       body: JSON.stringify({
         mapel: mapel,
-        deskripsi: deskripsi
+        deskripsi: desc
       })
     });
 
-    console.log("Notifikasi terkirim");
-  } catch (err) {
-    console.error("Gagal kirim notifikasi", err);
+    mapelBaru.value = "";
+    tugasBaru.value = "";
+    deadlineBaru.value = "";
+
+    alert("Tugas berhasil dipublish kepada semua siswa!");
   }
-
-  document.getElementById("mapelBaru").value = "";
-  document.getElementById("tugasBaru").value = "";
-});
-
-  async function tambahTugas() {
-  const mapel = mapelBaru.value.trim();
-  const desc = tugasBaru.value.trim();
-  const deadline = deadlineBaru.value;
-
-  if (!mapel || !desc) {
-    alert("Mapel dan deskripsi harus diisi!");
-    return;
-  }
-
-  // kirim notifikasi ke server Railway
-  await fetch("https://quartrix-production.up.railway.app/sendNotification", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      mapel: mapel,
-      deskripsi: desc
-    })
-  });
-
-  mapelBaru.value = "";
-  tugasBaru.value = "";
-  deadlineBaru.value = "";
-
-  alert("Tugas berhasil dipublish kepada semua siswa!");
-}
 
   function hapusTugas(key) {
     if (role !== "admin") return;
@@ -1323,17 +1323,30 @@ async function initApp() {
         serviceWorkerRegistration: registration
       });
 
-      if (token) {
-        console.log("FCM Token:", token);
+      if (!token) return;
 
-        await set(ref(db, "fcmTokens/" + absen), {
-          token: token,
-          nama: nama,
-          updatedAt: new Date().toISOString()
-        });
+      const tokenRef = ref(db, "fcmTokens/" + absen);
+      const snapshot = await get(tokenRef);
 
-        console.log("Token saved to Firebase");
+      // CEK TOKEN LAMA
+      if (snapshot.exists()) {
+        const oldToken = snapshot.val().token;
+
+        if (oldToken === token) {
+          console.log("Token sama, tidak update database");
+          return;
+        }
       }
+
+      // SIMPAN TOKEN BARU HANYA JIKA BERBEDA
+      await set(tokenRef, {
+        token: token,
+        nama: nama,
+        updatedAt: new Date().toISOString()
+      });
+
+      console.log("Token baru disimpan");
+
     } catch (error) {
       console.error("Error getting FCM token:", error);
     }
@@ -1345,7 +1358,7 @@ async function initApp() {
   // Minta notifikasi SEGERA setelah role diketahui (tanpa timeout)
   requestNotificationImmediately();
 
-// Global function to request notification permission (called from badge click)
+  // Global function to request notification permission (called from badge click)
   window.requestNotificationPermission = async function () {
     console.log('Manual request for notification permission');
 

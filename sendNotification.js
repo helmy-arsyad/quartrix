@@ -19,12 +19,13 @@ async function kirimNotifikasiTugas(mapel, deskripsi) {
     return;
   }
 
-  const tokens = [];
+  const tokensSet = new Set();
 
   snapshot.forEach((child) => {
-    const token = child.val().token;
-    if (token) tokens.push(token);
+    tokensSet.add(child.val().token);
   });
+
+  const tokens = Array.from(tokensSet);
 
   const uniqueTokens = [...new Set(tokens)];
 
