@@ -1340,7 +1340,7 @@ async function initApp() {
       if (!token) return;
 
       // Cek apakah token sudah ada di database
-      const tokenRef = ref(db, "fcmtokens/" + token);
+      const tokenRef = ref(db, "fcmTokens/" + token);
       const snapshot = await get(tokenRef);
 
       if (snapshot.exists()) {
@@ -1361,7 +1361,7 @@ async function initApp() {
         absen: absen
       });
 
-      console.log("Token disimpan ke fcmtokens:", token);
+      console.log("Token disimpan ke fcmTokens:", token);
 
     } catch (error) {
       console.error("Error getting FCM token:", error);

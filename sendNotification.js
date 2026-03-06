@@ -12,7 +12,7 @@ const db = admin.database();
 
 async function kirimNotifikasiTugas(mapel, deskripsi) {
 
-  const snapshot = await db.ref("fcmtokens").once("value");
+  const snapshot = await db.ref("fcmTokens").once("value");
 
   if (!snapshot.exists()) {
     console.log("Tidak ada token siswa");
