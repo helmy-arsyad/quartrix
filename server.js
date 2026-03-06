@@ -8,8 +8,6 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-app.options("*", cors());
-
 app.post("/sendNotification", async (req, res) => {
   const { mapel, deskripsi } = req.body;
 
