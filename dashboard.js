@@ -299,19 +299,17 @@ async function initApp() {
   const profilRef = ref(db, "siswa/" + absen);
 
   // Update UI awal dengan data localStorage
-  updateProfilUI();
-
-  // Load profil dari Firebase
-  get(profilRef).then((snapshot) => {
-    if (snapshot.exists()) {
-      profilData = snapshot.val();
-      updateProfilUI();
-    }
-  });
-
+  // FIX: Wait for DOM to be ready before updating UI
   function updateProfilUI() {
     const foto = document.getElementById("profilFoto");
     const infoText = document.getElementById("infoText");
+
+    // FIX: Guard against null elements
+    if (!foto || !infoText) {
+      console.log("updateProfilUI: Elements not ready, will retry...");
+      setTimeout(updateProfilUI, 100);
+      return;
+    }
 
     foto.src = profilData?.fotoURL || foto.src;
 
@@ -323,6 +321,14 @@ async function initApp() {
       infoText.innerText = `👋 Halo, ${namaDisplay}! Selamat datang di QUARTRIX (Absen ${absenDisplay}) 🌟`;
     }
   }
+
+  // Load profil dari Firebase
+  get(profilRef).then((snapshot) => {
+    if (snapshot.exists()) {
+      profilData = snapshot.val();
+      updateProfilUI();
+    }
+  });
 
   // Modal edit profil - Changed to redirect to profile.html
   const editProfilBtn = document.getElementById("editProfilBtn");
@@ -1085,25 +1091,41 @@ async function initApp() {
      ========================================== */
 
   // Fungsi untuk memainkan suara notifikasi
+  // FIX: Create AudioContext with user gesture handling
+  let audioContext = null;
+  
+  function getAudioContext() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resume AudioContext if it's suspended (fixes "AudioContext was not allowed to start" warning)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(e => {
+        console.log('Could not resume AudioContext:', e);
+      });
+    }
+    return audioContext;
+  }
+
   function playNotificationSound() {
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      const ctx = getAudioContext();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(ctx.destination);
 
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.3);
+      oscillator.frequency.setValueAtTime(800, ctx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
 
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
 
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + 0.3);
     } catch (e) {
-      console.log("Audio notification not supported");
+      console.log("Audio notification not supported:", e);
     }
   }
 
@@ -1355,6 +1377,29 @@ async function initApp() {
       try {
         const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
         console.log("Service Worker registered:", registration);
+        
+        // FIX: Wait for the Service Worker to be fully ready/activated
+        // This fixes the race condition where FCM tries to subscribe before SW is active
+        if (registration.active) {
+          console.log("Service Worker is already active");
+          return registration;
+        }
+        
+        // Wait for the service worker to become active
+        await new Promise((resolve) => {
+          const worker = registration.installing || registration.waiting;
+          if (worker) {
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'activated' || worker.state === 'active') {
+                resolve();
+              }
+            });
+          } else {
+            resolve();
+          }
+        });
+        
+        console.log("Service Worker is now active");
         return registration;
       } catch (error) {
         console.error("Error register service worker:", error);
