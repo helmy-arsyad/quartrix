@@ -121,20 +121,80 @@ function waitForAuthState() {
 async function signInOnce() {
   // Setup persistence SEBELUM login (penting!)
   await setupAuthPersistence();
-  
+
   try {
     console.log("Anonymous sign-in attempt (1x only)");
     const result = await signInAnonymously(auth);
     console.log("Anonymous sign-in successful:", result.user.uid);
-    
+
     // 🔥 FIX: Tunggu auth state benar-benar siap sebelum return
     await waitForAuthState();
-    
+
     return result;
   } catch (error) {
     console.error("Anonymous sign-in failed:", error.message);
     throw error;
   }
+}
+
+// Fungsi BARU untuk restore session - Lebih baik untuk iOS Safari
+// Ini akan mencoba restore session dulu, baru create baru jika perlu
+async function restoreSession() {
+  // Setup persistence dulu
+  await setupAuthPersistence();
+
+  // Coba tunggu session dari persistence (iOS Safari perlu waktu ini)
+  console.log("[Session] Trying to restore existing session...");
+  
+  return new Promise(async (resolve, reject) => {
+    // Cek apakah sudah ada user yang login
+    if (auth.currentUser) {
+      console.log("[Session] User already logged in:", auth.currentUser.uid);
+      resolve(auth.currentUser);
+      return;
+    }
+
+    // Kalau belum ada, tunggu callback dari Firebase (session restoration)
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      unsubscribe();
+      
+      if (user) {
+        console.log("[Session] Session restored successfully:", user.uid);
+        resolve(user);
+      } else {
+        // Tidak ada session yang bisa direstore, buat baru
+        console.log("[Session] No existing session, creating new one...");
+        try {
+          const result = await signInAnonymously(auth);
+          console.log("[Session] New anonymous user created:", result.user.uid);
+          resolve(result.user);
+        } catch (error) {
+          console.error("[Session] Failed to create new session:", error);
+          reject(error);
+        }
+      }
+    });
+
+    // Timeout - Jika tidak ada response dalam 5 detik, buat session baru
+    setTimeout(() => {
+      if (auth.currentUser) {
+        console.log("[Session] User appeared after timeout:", auth.currentUser.uid);
+        resolve(auth.currentUser);
+      } else {
+        console.log("[Session] Timeout waiting for session, creating new one...");
+        unsubscribe().catch(() => {});
+        signInAnonymously(auth)
+          .then(result => {
+            console.log("[Session] New anonymous user after timeout:", result.user.uid);
+            resolve(result.user);
+          })
+          .catch(error => {
+            console.error("[Session] Failed to create session after timeout:", error);
+            reject(error);
+          });
+      }
+    }, 5000);
+  });
 }
 
 // Fungsi login yang dipanggil dari HTML

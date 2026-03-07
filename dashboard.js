@@ -140,6 +140,70 @@ async function signInOnce() {
   }
 }
 
+// Fungsi BARU untuk restore session - Lebih baik untuk iOS Safari
+// Ini akan mencoba restore session dulu, baru create baru jika perlu
+async function restoreSession() {
+  // Setup persistence dulu
+  await setupAuthPersistence();
+
+  // Coba tunggu session dari persistence (iOS Safari perlu waktu ini)
+  console.log("[Session] Trying to restore existing session...");
+  
+  return new Promise(async (resolve, reject) => {
+    // Cek apakah sudah ada user yang login
+    if (auth.currentUser) {
+      console.log("[Session] User already logged in:", auth.currentUser.uid);
+      resolve(auth.currentUser);
+      return;
+    }
+
+    // Kalau belum ada, tunggu callback dari Firebase (session restoration)
+    // Ini penting untuk iOS Safari - Firebase akan coba restore session dari localStorage
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      unsubscribe(); // Stop listening setelah dapat response
+      
+      if (user) {
+        console.log("[Session] Session restored successfully:", user.uid);
+        resolve(user);
+      } else {
+        // Tidak ada session yang bisa direstore, buat baru
+        console.log("[Session] No existing session, creating new one...");
+        try {
+          const result = await signInAnonymously(auth);
+          console.log("[Session] New anonymous user created:", result.user.uid);
+          resolve(result.user);
+        } catch (error) {
+          console.error("[Session] Failed to create new session:", error);
+          reject(error);
+        }
+      }
+    });
+
+    // Timeout - Jika tidak ada response dalam 5 detik, buat session baru
+    setTimeout(() => {
+      // Cek lagi apakah sudah ada user (mungkin callback belum sempat jalan)
+      if (auth.currentUser) {
+        console.log("[Session] User appeared after timeout:", auth.currentUser.uid);
+        resolve(auth.currentUser);
+      } else {
+        console.log("[Session] Timeout waiting for session, creating new one...");
+        // Unsubscribe dulu sebelum create baru
+        unsubscribe().catch(() => {});
+        // Buat session baru
+        signInAnonymously(auth)
+          .then(result => {
+            console.log("[Session] New anonymous user after timeout:", result.user.uid);
+            resolve(result.user);
+          })
+          .catch(error => {
+            console.error("[Session] Failed to create session after timeout:", error);
+            reject(error);
+          });
+      }
+    }, 5000);
+  });
+}
+
 // Fungsi untuk sinkronkan status admin dari localStorage ke Firebase
 async function syncAdminStatus() {
   const role = localStorage.getItem("role");
@@ -171,11 +235,11 @@ async function syncAdminStatus() {
   return null;
 }
 
-// Login anonymous secara otomatis TANPA retry (FIX #3)
+// Login anonymous dengan restore session - Lebih baik untuk iOS Safari
 async function initAuth() {
   try {
-    // 🔥 FIX: Login 1x saja, tunggu auth state ready
-    await signInOnce();
+    // 🔥 FIX: Gunakan restoreSession untuk mencoba restore session dulu
+    await restoreSession();
     console.log("Anonymous login berhasil");
 
     try {
