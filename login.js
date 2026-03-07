@@ -273,8 +273,9 @@ window.login = async () => {
         createdAt: new Date().toISOString()
       });
       
-      // 🔥 FIX: Simpan data user ke Firebase untuk iOS Safari session recovery
-      await saveUserDataToFirebase(uid, "siswa", "ADMIN", "-");
+// 🔥 FIX: Simpan data user ke Firebase untuk iOS Safari session recovery
+      // Admin disimpan dengan role "admin" agar bisa restore dengan benar
+      await saveUserDataToFirebase(uid, "admin", "ADMIN", "-");
       
       // Simpan ke localStorage ✅ PAKAI SAFE VERSION
       safeSet("isLogin", "true");
