@@ -47,7 +47,23 @@ const auth = getAuth(app);
 // Fungsi untuk mendeteksi apakah browser adalah iOS Safari
 function isIOSafari() {
   const ua = navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) && /Safari/.test(ua) && !/Chrome/.test(ua);
+  // Deteksi iOS Safari termasuk WKWebView (native app browser)
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+  const isWKWebView = /wkwebview/i.test(ua);
+  return (isIOS && isSafari) || isWKWebView;
+}
+
+// Fungsi untuk mendeteksi apakah browser support localStorage dengan benar
+function isLocalStorageAvailable() {
+  try {
+    const test = '__test__';
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 // Flag untuk mencegah double setup persistence
@@ -72,13 +88,14 @@ async function setupAuthPersistence() {
     }
 
     // 🔥 FIX UTAMA: Tentukan persistence berdasarkan browser SEBELUM auth operation
-    // iOS Safari → Gunakan session persistence (lebih stabil)
-    // Browser lain → Gunakan local persistence
+    // iOS Safari → Gunakan local persistence untuk session yang lebih lama
+    // Browser lain → Gunakan local persistence juga
+    // NOTE: session persistence clears when browser is closed, local persists
+    await setPersistence(auth, browserLocalPersistence);
+    
     if (isIOSafari()) {
-      await setPersistence(auth, browserSessionPersistence);
-      console.log("iOS Safari → session persistence");
+      console.log("iOS Safari → local persistence (persistent session)");
     } else {
-      await setPersistence(auth, browserLocalPersistence);
       console.log("Other browsers → local persistence");
     }
 
