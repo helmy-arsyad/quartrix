@@ -19,24 +19,47 @@ self.addEventListener('push', function(event) {
   }
 
   // Extract notification data - support both data and notification formats
-  const title = data.notification?.title || data.title || data.data?.title || '📝 Tugas Baru!';
+  const title = data.notification?.title || data.title || data.data?.title || '📝 QUARTRIX - Tugas Baru!';
   const body = data.notification?.body || data.body || data.data?.body || 'Admin telah menambahkan tugas baru';
-  const icon = data.icon || 'https://i.ibb.co/7xxVWwH7/IMG-8428.png';
+  const icon = data.icon || 'https://i.ibb.co.com/7xxVWwH7/IMG-8428.png';
+  
+  // Extract additional data
+  const mapel = data.mapel || data.data?.mapel || '';
+  const deskripsi = data.deskripsi || data.data?.deskripsi || '';
+  const deadline = data.deadline || data.data?.deadline || '';
+  const notifTimestamp = data.timestamp || data.data?.timestamp || new Date().toLocaleString('id-ID', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Create more detailed notification body
+  let detailedBody = body;
+  if (deadline) {
+    detailedBody = `${body}\n📅 Batas: ${deadline}`;
+  }
 
   const options = {
-    body: body,
+    body: detailedBody,
     icon: icon,
-    badge: 'https://i.ibb.co/7xxVWwH7/IMG-8428.png',
+    badge: 'https://i.ibb.co.com/7xxVWwH7/IMG-8428.png',
     tag: 'tugas-notification',
     requireInteraction: true,
-    vibrate: [200, 100, 200],
+    vibrate: [200, 100, 200, 100, 200],
+    timestamp: Date.now(),
     data: {
       url: data.url || '/dashboard.html',
-      timestamp: Date.now()
+      timestamp: notifTimestamp,
+      mapel: mapel,
+      deskripsi: deskripsi,
+      deadline: deadline
     }
   };
 
-  console.log('[Push Event] Showing notification:', title, body);
+  console.log('[Push Event] Showing notification:', title, detailedBody);
 
   event.waitUntil(
     self.registration.showNotification(title, options)
@@ -80,10 +103,21 @@ self.addEventListener('message', function(event) {
   
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
     const { title, body } = event.data;
+    const deadline = event.data.deadline || '';
+    
+    let detailedBody = body;
+    if (deadline) {
+      detailedBody = `${body}\n📅 Batas: ${deadline}`;
+    }
+    
     self.registration.showNotification(title, {
-      body: body,
-      icon: 'https://i.ibb.co/7xxVWwH7/IMG-8428.png',
-      tag: 'tugas-notification'
+      body: detailedBody,
+      icon: 'https://i.ibb.co.com/7xxVWwH7/IMG-8428.png',
+      badge: 'https://i.ibb.co.com/7xxVWwH7/IMG-8428.png',
+      tag: 'tugas-notification',
+      requireInteraction: true,
+      vibrate: [200, 100, 200, 100, 200]
     });
   }
 });
+

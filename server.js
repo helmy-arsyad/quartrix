@@ -9,10 +9,10 @@ app.use(cors());
 app.use(bodyParser.json());
 
 app.post("/sendNotification", async (req, res) => {
-  const { mapel, deskripsi } = req.body;
+  const { mapel, deskripsi, deadline } = req.body;
 
   try {
-    await kirimNotifikasiTugas(mapel, deskripsi);
+    await kirimNotifikasiTugas(mapel, deskripsi, deadline);
     res.send("Notifikasi terkirim");
   } catch (err) {
     console.error(err);

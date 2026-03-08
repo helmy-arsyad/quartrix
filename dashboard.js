@@ -986,7 +986,8 @@ async function initApp() {
           },
           body: JSON.stringify({
             mapel: mapel,
-            deskripsi: deskripsi
+            deskripsi: deskripsi,
+            deadline: deadline
           })
         });
 
@@ -997,6 +998,7 @@ async function initApp() {
 
       document.getElementById("mapelBaru").value = "";
       document.getElementById("tugasBaru").value = "";
+      document.getElementById("deadlineBaru").value = "";
     });
   }
 
@@ -1018,7 +1020,8 @@ async function initApp() {
       },
       body: JSON.stringify({
         mapel: mapel,
-        deskripsi: desc
+        deskripsi: desc,
+        deadline: deadline
       })
     });
 
@@ -1895,8 +1898,15 @@ async function initApp() {
         console.log('📬 Data:', payload.data);
 
         // Extract notification data - support both notification and data formats
-        const notificationTitle = payload.notification?.title || payload.data?.title || 'Tugas Baru!';
-        const notificationBody = payload.notification?.body || payload.data?.body || 'Admin telah menambahkan tugas baru';
+        const notificationTitle = payload.notification?.title || payload.data?.title || '📝 QUARTRIX - Tugas Baru!';
+        const notificationBodyRaw = payload.notification?.body || payload.data?.body || 'Admin telah menambahkan tugas baru';
+        const deadline = payload.data?.deadline || '';
+        
+        // Add deadline to notification body if available
+        let notificationBody = notificationBodyRaw;
+        if (deadline) {
+          notificationBody = `${notificationBodyRaw}\n📅 Batas: ${deadline}`;
+        }
 
         console.log('📬 Showing notification:', notificationTitle, notificationBody);
 

@@ -10,7 +10,7 @@ admin.initializeApp({
 
 const db = admin.database();
 
-async function kirimNotifikasiTugas(mapel, deskripsi) {
+async function kirimNotifikasiTugas(mapel, deskripsi, deadline) {
 
 const snapshot = await db.ref("fcmtokens").once("value");
 
@@ -30,18 +30,36 @@ const snapshot = await db.ref("fcmtokens").once("value");
   
   console.log("Mengirim notifikasi ke", uniqueTokens.length, "tokens");
 
+  // Format deadline dengan format yang lebih readable
+  const deadlineInfo = deadline ? `📅 Batas: ${deadline}` : '';
+  const timestamp = new Date().toLocaleString('id-ID', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  // Buat body notifikasi yang lebih lengkap
+  const notificationBody = deadline 
+    ? `${mapel}\n${deskripsi}\n${deadlineInfo}`
+    : `${mapel}\n${deskripsi}`;
+
   // Format pesan untuk FCM - menggunakan notification field untuk foreground
   // dan data field untuk background
   const message = {
     notification: {
-      title: "📝 Tugas Baru Ditambahkan",
-      body: `${mapel} - ${deskripsi.substring(0, 60)}`
+      title: "📝 QUARTRIX - Tugas Baru!",
+      body: notificationBody
     },
     data: {
-      title: "📝 Tugas Baru Ditambahkan",
-      body: `${mapel} - ${deskripsi.substring(0, 60)}`,
+      title: "📝 QUARTRIX - Tugas Baru!",
+      body: notificationBody,
       mapel: mapel,
       deskripsi: deskripsi,
+      deadline: deadline || '',
+      timestamp: timestamp,
       click_action: "dashboard.html"
     },
     tokens: uniqueTokens,
@@ -50,7 +68,9 @@ const snapshot = await db.ref("fcmtokens").once("value");
         icon: "https://i.ibb.co.com/7xxVWwH7/IMG-8428.png",
         badge: "https://i.ibb.co.com/7xxVWwH7/IMG-8428.png",
         tag: "tugas-notification",
-        requireInteraction: true
+        requireInteraction: true,
+        timestamp: Date.now(),
+        vibrate: [200, 100, 200, 100, 200]
       },
       fcmOptions: {
         link: "/dashboard.html"
