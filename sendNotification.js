@@ -50,11 +50,11 @@ const snapshot = await db.ref("fcmtokens").once("value");
   // dan data field untuk background
   const message = {
     notification: {
-      title: "📝 QUARTRIX - Tugas Baru!",
+      title: "QUARTRIX",
       body: notificationBody
     },
     data: {
-      title: "📝 QUARTRIX - Tugas Baru!",
+      title: "QUARTRIX",
       body: notificationBody,
       mapel: mapel,
       deskripsi: deskripsi,

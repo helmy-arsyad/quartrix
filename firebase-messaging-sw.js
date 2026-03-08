@@ -19,7 +19,7 @@ self.addEventListener('push', function(event) {
   }
 
   // Extract notification data - support both data and notification formats
-  const title = data.notification?.title || data.title || data.data?.title || '📝 QUARTRIX - Tugas Baru!';
+  const title = data.notification?.title || data.title || data.data?.title || 'QUARTRIX';
   const body = data.notification?.body || data.body || data.data?.body || 'Admin telah menambahkan tugas baru';
   const icon = data.icon || 'https://i.ibb.co.com/7xxVWwH7/IMG-8428.png';
   

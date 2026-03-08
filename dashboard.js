@@ -1391,11 +1391,9 @@ async function initApp() {
       }
 
       if (!lastVisit && availableTasks.length > 0) {
-        // Toast notification disabled
-        console.log('Welcome message (toast disabled)');
+        // First visit - no notification needed
       } else if (newTasksCount > 0) {
-        // Toast notification disabled
-        console.log('New tasks notification (toast disabled):', newTasksCount);
+        // New tasks detected
       }
 
       saveLastVisitTugas();
@@ -1418,17 +1416,7 @@ async function initApp() {
       const availableTasks = tugasData.filter(t => t.tersedia !== false);
 
       if (availableTasks.length > previousTaskCount && previousTaskCount > 0) {
-        const latestTask = availableTasks
-          .sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-            const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-            return dateB - dateA;
-          })[0];
-
-        if (latestTask) {
-          // Toast notification disabled
-          console.log('New task added notification (toast disabled)');
-        }
+        // New task added - no notification shown to user
       }
 
       previousTaskCount = availableTasks.length;
@@ -1911,8 +1899,8 @@ async function initApp() {
         console.log('📬 Data:', payload.data);
 
         // Extract notification data - support both notification and data formats
-        const notificationTitle = payload.notification?.title || payload.data?.title || '📝 QUARTRIX - Tugas Baru!';
-        const notificationBodyRaw = payload.notification?.body || payload.data?.body || 'Admin telah menambahkan tugas baru';
+        const notificationTitle = payload.notification?.title || payload.data?.title || 'QUARTRIX';
+        const notificationBodyRaw = payload.notification?.body || payload.data?.body || 'Admin telah menambahkan tugas';
         const deadline = payload.data?.deadline || '';
         
         // Add deadline to notification body if available
