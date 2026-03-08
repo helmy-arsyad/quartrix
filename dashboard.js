@@ -1692,50 +1692,145 @@ async function initApp() {
     }
 
     try {
+      console.log("Step 1: Registering Service Worker...");
       const registration = await registerServiceWorker();
-      if (!registration) return;
+      if (!registration) {
+        console.error("Service Worker registration failed, cannot get FCM token");
+        return;
+      }
+      console.log("Step 1: Service Worker registered successfully");
 
+      console.log("Step 2: Getting Messaging instance...");
       messaging = getMessaging(app);
+      if (!messaging) {
+        console.error("Failed to get messaging instance");
+        return;
+      }
+      console.log("Step 2: Messaging instance obtained");
 
       // Coba dulu dengan token yang sudah ada di localStorage
       const existingToken = getTokenFromLocalStorage();
       if (existingToken) {
-        console.log('Mencoba gunakan token dari localStorage...');
+        console.log('Step 3: Trying to use token from localStorage...');
         const isValid = await isTokenInFirebase(existingToken);
         if (isValid) {
-          console.log('Token dari localStorage valid, tidak perlu generate baru');
+          console.log('Token from localStorage is valid, no need to generate new one');
           // Tetap update lastActive
           await saveTokenToStorage(existingToken);
           return;
         } else {
-          console.log('Token dari localStorage tidak valid di Firebase, generate ulang');
+          console.log('Token from localStorage is invalid in Firebase, generating new token');
           localStorage.removeItem('quartrix_fcm_token');
         }
       }
 
-      // Generate token baru
-      console.log('Generate FCM token baru...');
-      const token = await getToken(messaging, {
-        vapidKey: "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ",
-        serviceWorkerRegistration: registration
-      });
+      // Generate token baru dengan timeout
+      console.log('Step 4: Generating FCM token new...');
+      console.log('Step 4a: Calling getToken with vapidKey and serviceWorkerRegistration');
+      
+      // Tambahkan timeout untuk getToken (maksimum 15 detik)
+      const token = await Promise.race([
+        getToken(messaging, {
+          vapidKey: "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ",
+          serviceWorkerRegistration: registration
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("FCM token request timeout after 15 seconds")), 15000)
+        )
+      ]);
+
+      console.log('Step 4b: getToken returned, token:', token ? token.substring(0, 20) + '...' : 'NULL');
 
       if (!token) {
-        console.log('Tidak ada token yang diperoleh');
+        console.log('No token obtained from getToken');
+        // Coba lagi dengan cara lain - tanpa serviceWorkerRegistration
+        console.log('Retrying getToken without serviceWorkerRegistration...');
+        try {
+          const retryToken = await getToken(messaging, {
+            vapidKey: "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ"
+          });
+          console.log('Retry result:', retryToken ? retryToken.substring(0, 20) + '...' : 'NULL');
+          if (retryToken) {
+            await saveTokenToStorage(retryToken);
+            return;
+          }
+        } catch (retryError) {
+          console.error('Retry also failed:', retryError);
+        }
         return;
       }
 
       // Simpan token
+      console.log('Step 5: Saving token to storage...');
       await saveTokenToStorage(token);
+      console.log('Step 5: Token saved successfully!');
 
     } catch (error) {
       console.error("Error getting FCM token:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
       
-      // Jika error, coba lagi dengan delay
+      // Jika error timeout, coba pendekatan lain
+      const isTimeout = error.message?.includes("timeout");
+      
+      if (isTimeout) {
+        console.log("FCM getToken timeout - trying alternative approach...");
+        
+        // Coba pendekatan alternatif: tanpa serviceWorkerRegistration dan dengan timeout lebih pendek
+        try {
+          console.log("Trying alternative: getToken without SW registration...");
+          const altToken = await Promise.race([
+            getToken(messaging, {
+              vapidKey: "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ"
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Alt token timeout")), 8000)
+            )
+          ]);
+          
+          if (altToken) {
+            console.log('Alternative approach succeeded! Token:', altToken.substring(0, 20) + '...');
+            await saveTokenToStorage(altToken);
+            return;
+          }
+        } catch (altError) {
+          console.log("Alternative approach also failed:", altError.message);
+        }
+      }
+      
+      // Jika error karena FCM tidak didukung
       if (error.code === 'messaging/failed-start-background-token-fetch' || 
           error.code === 'messaging/unsupported-browser' ||
           error.message?.includes('permission')) {
-        console.log('FCM tidak didukung di browser ini, skip');
+        console.log('FCM is not supported in this browser, skip');
+        return; // Stop di sini, jangan retry terus
+      }
+      
+      // Coba lagi dengan delay 5 detik (hanya jika bukan timeout)
+      if (!isTimeout) {
+        console.log('Retrying getFCMToken in 5 seconds...');
+        setTimeout(async () => {
+          try {
+            const retryMessaging = getMessaging(app);
+            const retryToken = await Promise.race([
+              getToken(retryMessaging, {
+                vapidKey: "BNi-Tt9FG9CYQJTTRIgK5g-_6RvI-AZ4juWhxSfh01fKv4lpvzLKWHfNYAgnrzsPCkUh_sLOwzmFclURRJM6leQ"
+              }),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Retry timeout")), 10000)
+              )
+            ]);
+            if (retryToken) {
+              console.log('Retry successful, token:', retryToken.substring(0, 20) + '...');
+              await saveTokenToStorage(retryToken);
+            }
+          } catch (retryError) {
+            console.error('Retry also failed:', retryError.message);
+          }
+        }, 5000);
+      } else {
+        console.log("Skipping retry for timeout - FCM may not be supported in this environment");
+        console.log("This usually happens on HTTP, Safari without proper config, or unsupported browsers");
       }
     }
   }
