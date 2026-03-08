@@ -896,28 +896,68 @@
 
         // Fallback: If absen doesn't exist, try to find by name
         if (!siswaSnapshot.exists()) {
+          console.log("Absen not found, trying to find by name:", namaSiswa);
           const allSiswaSnapshot = await get(ref(db, "siswa"));
           if (allSiswaSnapshot.exists()) {
             const allSiswa = allSiswaSnapshot.val();
+            const searchName = (namaSiswa || absenSiswa || "").trim().toLowerCase();
+            
             for (const absenKey in allSiswa) {
-              const searchName = (namaSiswa || absenSiswa || "").trim();
-              if (allSiswa[absenKey].nama && allSiswa[absenKey].nama.toLowerCase() === searchName.toLowerCase()) {
+              const studentName = allSiswa[absenKey]?.nama || "";
+              // Use case-insensitive comparison and handle URL encoding
+              if (studentName.toLowerCase() === searchName || 
+                  decodeURIComponent(studentName.toLowerCase()) === searchName ||
+                  decodeURIComponent(searchName) === studentName.toLowerCase()) {
                 siswaSnapshot = { exists: () => true, val: () => allSiswa[absenKey] };
+                console.log("Found student by name:", allSiswa[absenKey].nama, "with absen:", absenKey);
                 break;
               }
             }
           }
 
           if (!siswaSnapshot.exists()) {
-            showError();
-            return;
+            // Try additional fallback: search by partial name match
+            console.log("Exact name match not found, trying partial match");
+            const allSiswaSnapshot = await get(ref(db, "siswa"));
+            if (allSiswaSnapshot.exists()) {
+              const allSiswa = allSiswaSnapshot.val();
+              const searchName = (namaSiswa || absenSiswa || "").trim().toLowerCase();
+              
+              for (const absenKey in allSiswa) {
+                const studentName = allSiswa[absenKey]?.nama || "";
+                if (studentName.toLowerCase().includes(searchName) || 
+                    searchName.includes(studentName.toLowerCase())) {
+                  siswaSnapshot = { exists: () => true, val: () => allSiswa[absenKey] };
+                  console.log("Found student by partial match:", allSiswa[absenKey].nama, "with absen:", absenKey);
+                  break;
+                }
+              }
+            }
+            
+            if (!siswaSnapshot.exists()) {
+              showError();
+              return;
+            }
           }
         }
 
         const siswaData = siswaSnapshot.val();
 
         // Get the correct absen from the found student data
-        const correctAbsen = siswaData.absen || absenSiswa;
+        // If the found student's absen differs from URL absen, use the Firebase absen (the correct one)
+        // This handles the case where student was found by name or URL has old absen
+        let correctAbsen = absenSiswa;
+        
+        // If the found student has a different absen in Firebase than URL, use Firebase absen
+        if (siswaData.absen && String(siswaData.absen) !== String(absenSiswa)) {
+          // Student found by name - use the Firebase absen as that's the current/active one
+          correctAbsen = siswaData.absen;
+          console.log("Using Firebase absen (current):", correctAbsen, "| URL absen:", absenSiswa);
+        } else if (siswaData.absen) {
+          correctAbsen = siswaData.absen;
+        }
+
+        console.log("Profile found - Correct absen:", correctAbsen, "| Original URL absen:", absenSiswa);
 
         // Update UI
         document.getElementById("profilePhoto").src =
@@ -929,10 +969,20 @@
         document.getElementById("profileBadge").textContent =
           correctAbsen || "?";
 
-        // Load tasks data using the profile being viewed (from URL parameter), not the logged-in user
-        const taskAbsen = correctAbsen;
-        console.log("Using taskAbsen:", taskAbsen, "(profile absen:", correctAbsen, ")");
-        await loadTasks(taskAbsen);
+        // Load tasks data - always prioritize Firebase data
+        // Get logged-in user's absen from localStorage for comparison
+        const loginAbsen = localStorage.getItem("absen");
+        
+        // Check if viewing own profile (compare as strings to avoid type mismatch)
+        // Use correctAbsen for comparison, not the original URL absen
+        const isOwnProfile = loginAbsen && (String(loginAbsen) === String(correctAbsen) || String(loginAbsen) === String(absenSiswa));
+        
+        console.log("Viewing profile absen:", correctAbsen, "| Login absen:", loginAbsen, "| Is own profile:", isOwnProfile);
+        
+        // Always include localStorage data since it has latest completed tasks before Firebase sync
+        // IMPORTANT: Use loginAbsen from localStorage for localStorage data retrieval
+        // This ensures consistency with how dashboard.js saves tasks
+        await loadTasks(correctAbsen, true, loginAbsen);
 
         // Show profile content
         document.getElementById("loadingState").style.display = "none";
@@ -944,15 +994,11 @@
     }
 
     // Load tasks data
-    async function loadTasks(absen) {
+    async function loadTasks(absen, includeLocalStorage = false, localStorageAbsen = null) {
       try {
-        console.log("Loading tasks for absen:", absen);
-
-        // First check localStorage for completed tasks (from same browser)
-        const localStorageKey = "tugasSelesai_" + absen;
-        const localTugasSelesai = localStorage.getItem(localStorageKey);
-        console.log("localStorage key:", localStorageKey);
-        console.log("localStorage value:", localTugasSelesai);
+        // Use localStorageAbsen if provided (for own profile), otherwise use absen
+        const lsAbsen = localStorageAbsen || absen;
+        console.log("Loading tasks for absen:", absen, "| includeLocalStorage:", includeLocalStorage, "| localStorageAbsen:", lsAbsen);
 
         // Get all tasks
         const tugasSnapshot = await get(ref(db, "tugas"));
@@ -971,17 +1017,24 @@
         // Merge localStorage and Firebase data
         let tugasSelesai = {};
 
-        // Add Firebase data
+        // Add Firebase data first
         Object.assign(tugasSelesai, firebaseTugasSelesai);
 
-        // Add localStorage data if exists
-        if (localTugasSelesai) {
-          try {
-            const parsed = JSON.parse(localTugasSelesai);
-            Object.assign(tugasSelesai, parsed);
-            console.log("Merged with localStorage data:", parsed);
-          } catch (e) {
-            console.error("Error parsing localStorage:", e);
+        // Add localStorage data only if viewing own profile
+        if (includeLocalStorage) {
+          const localStorageKey = "tugasSelesai_" + lsAbsen;
+          const localTugasSelesai = localStorage.getItem(localStorageKey);
+          console.log("localStorage key:", localStorageKey);
+          console.log("localStorage value:", localTugasSelesai);
+          
+          if (localTugasSelesai) {
+            try {
+              const parsed = JSON.parse(localTugasSelesai);
+              Object.assign(tugasSelesai, parsed);
+              console.log("Merged with localStorage data:", parsed);
+            } catch (e) {
+              console.error("Error parsing localStorage:", e);
+            }
           }
         }
 

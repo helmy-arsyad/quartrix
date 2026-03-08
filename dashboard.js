@@ -1130,9 +1130,23 @@ async function initApp() {
 
       // pindahkan data
       await set(ref(db, "siswa/" + baru), dataLama);
+      
+      // Also move tugasSelesai data from old absen to new absen
+      const oldTugasSelesaiRef = ref(db, "tugasSelesai/" + lama);
+      const oldTugasSnapshot = await get(oldTugasSelesaiRef);
+      
+      if (oldTugasSnapshot.exists()) {
+        const oldTugasData = oldTugasSnapshot.val();
+        // Set data tugas selesai ke absen baru
+        await set(ref(db, "tugasSelesai/" + baru), oldTugasData);
+        // Hapus data tugas selesai dari absen lama
+        await remove(oldTugasSelesaiRef);
+        console.log("Data tugas selesai berhasil dipindahkan dari absen", lama, "ke", baru);
+      }
+      
       await remove(oldRef);
 
-      alert("Absen berhasil diubah!");
+      alert("Absen berhasil diubah! Data tugas selesai juga telah dipindahkan.");
       absenLama.value = "";
       absenBaruAdmin.value = "";
     });
