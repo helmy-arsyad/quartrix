@@ -1299,7 +1299,14 @@ async function initApp() {
   }
 
   // Fungsi untuk menampilkan toast notifikasi WhatsApp-style
+  // NOTE: Toast notification disabled - only push notification will work
   window.showToastNotification = function (title, message, isNew = true) {
+    // Toast notification disabled - keeping this function for compatibility but not showing anything
+    // Users will receive push notifications instead
+    console.log('Toast notification (disabled):', title, message);
+    return;
+    
+    /* Original toast code - disabled
     const toastContainer = document.getElementById('toastContainer');
     if (!toastContainer) return;
 
@@ -1322,6 +1329,7 @@ async function initApp() {
         toast.remove();
       }
     }, 5000);
+    */
   };
 
   // Simpan timestamp terakhir посещение tugas
