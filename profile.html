@@ -943,42 +943,48 @@
 
         const siswaData = siswaSnapshot.val();
 
-        // Get the correct absen from the found student data
-        // If the found student's absen differs from URL absen, use the Firebase absen (the correct one)
-        // This handles the case where student was found by name or URL has old absen
+        // ALWAYS find student by NAME first, then get the correct absen from Firebase
+        // This ensures we use the correct current absen, not the old URL absen
         let correctAbsen = absenSiswa;
         
-        // If the found student has a different absen in Firebase than URL, use Firebase absen
-        if (siswaData.absen && String(siswaData.absen) !== String(absenSiswa)) {
-          // Student found by name - use the Firebase absen as that's the current/active one
-          correctAbsen = siswaData.absen;
-          console.log("Using Firebase absen (current):", correctAbsen, "| URL absen:", absenSiswa);
-        } else if (siswaData.absen) {
-          correctAbsen = siswaData.absen;
+        // Always search all students by name to get the correct current absen
+        // This handles the case where URL has old absen but Firebase has updated absen
+        console.log("Searching for student by name to get correct absen...");
+        const allSiswaSnapshot = await get(ref(db, "siswa"));
+        
+        if (allSiswaSnapshot.exists()) {
+          const allSiswa = allSiswaSnapshot.val();
+          const searchName = (namaSiswa || "").trim().toLowerCase();
+          
+          for (const absenKey in allSiswa) {
+            const studentName = allSiswa[absenKey]?.nama || "";
+            if (studentName.toLowerCase() === searchName || 
+                decodeURIComponent(studentName.toLowerCase()) === searchName ||
+                decodeURIComponent(searchName) === studentName.toLowerCase()) {
+              // Found the student - use their current absen from Firebase
+              correctAbsen = absenKey;
+              console.log("Found student by name:", allSiswa[absenKey].nama, "| Correct absen:", correctAbsen);
+              break;
+            }
+          }
         }
 
-        console.log("Profile found - Correct absen:", correctAbsen, "| Original URL absen:", absenSiswa);
+        console.log("Profile found - Final correctAbsen:", correctAbsen);
 
-        // Update UI
+        // Update UI - Tampilkan absen dari data siswa (absen display/lama), fallback ke correctAbsen jika tidak ada
         document.getElementById("profilePhoto").src =
           siswaData.fotoURL || defaultAvatar;
         document.getElementById("profileName").textContent =
           siswaData.nama || "Nama tidak tersedia";
+        // Tampilkan absen dari field "absen" di Firebase (absen display/lama), bukan correctAbsen (absen login)
         document.getElementById("profileAbsen").textContent =
-          "Absen: " + (correctAbsen || "-");
+          "Absen: " + (siswaData.absen || correctAbsen || "-");
+        // Badge juga tampilkan absen display
         document.getElementById("profileBadge").textContent =
-          correctAbsen || "?";
+          siswaData.absen || correctAbsen || "?";
 
-        // Load tasks data - use Firebase only (no localStorage)
-        // Get logged-in user's absen from localStorage for comparison
-        const loginAbsen = localStorage.getItem("absen");
-        
-        // Check if viewing own profile
-        const isOwnProfile = loginAbsen && (String(loginAbsen) === String(correctAbsen) || String(loginAbsen) === String(absenSiswa));
-        
-        console.log("Viewing profile absen:", correctAbsen, "| Login absen:", loginAbsen, "| Is own profile:", isOwnProfile);
-        
-        // Use Firebase only - loadTasks with correctAbsen
+        // Load tasks data - ALWAYS use Firebase absen for tugasSelesai
+        // Never use URL absen - always use the absen from Firebase student data
         await loadTasks(correctAbsen);
 
         // Show profile content
