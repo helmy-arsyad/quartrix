@@ -752,19 +752,7 @@
         </button>
       </div>
 
-      <!-- Stats Section -->
-      <div class="stats-container">
-        <div class="stat-card">
-          <div class="stat-icon">📚</div>
-          <div id="totalTugas" class="stat-number">0</div>
-          <div class="stat-label">Total Tugas</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">✅</div>
-          <div id="tugasSelesai" class="stat-number">0</div>
-          <div class="stat-label">Tugas Selesai</div>
-        </div>
-      </div>
+
 
       <!-- Tasks Section -->
       <div class="tasks-section">
@@ -1042,9 +1030,7 @@
         ).length;
         console.log("Completed tasks (available only):", tugasSelesaiCount);
 
-        // Update stats - use tugasSelesaiCount (available tasks only) for consistency
-        document.getElementById("totalTugas").textContent = totalTugas;
-        document.getElementById("tugasSelesai").textContent = tugasSelesaiCount;
+        // Stats removed, skip update
 
         // Render completed tasks
         const tasksList = document.getElementById("tasksList");
@@ -1094,8 +1080,7 @@
         }
       } catch (error) {
         console.error("Error loading tasks:", error);
-        document.getElementById("totalTugas").textContent = "0";
-        document.getElementById("tugasSelesai").textContent = "0";
+
       }
     }
 
